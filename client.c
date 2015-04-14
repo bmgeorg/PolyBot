@@ -29,12 +29,11 @@ bool parseArgs(int argc, char** argv) {
 	
 	serverHost = argv[1];
 	serverPort = argv[2];
-	if(atoi(argv[3]) <= 0)
+	if(!sscanf(argv[3], "%lf", &L) || L <= 0)
 		quit("L must be greater than 0");
-	L = atoi(argv[3]);
-	if(atoi(argv[4]) < 4 || atoi(argv[4]) > 8)
-		quit("N must be in the range [4, 8]");
 	N = atoi(argv[4]);
+	if(N < 4 || N > 8)
+		quit("N must be in the range [4, 8]");
 	
 	return true;
 }
@@ -88,12 +87,26 @@ void setupSocket() {
 	Return NULL if response contains no data
 */
 void* sendRequest(char* requestString) {
-	//create id
-	//create request from id and requestString
+	static uint32_t ID = 0;
+	
+	//4 bytes for ID +  requestString length + 1 byte for null char
+	int requestLen = 5+strlen(requestString);
+	void* request = malloc(requestLen);
+	
+	//insert ID
+	*((uint32_t*)request) = htonl(ID);
+	
+	//insert request string
+	memcpy(((char*)request)+4, requestString, strlen(requestString)+1);
+	
 	//send request
+	int numBytesSent = send(sock, request, requestLen, 0);
 	//start timeout timer
 	//reassemble response
 	//return data
+	
+	//update ID for next call
+	ID++;
 	
 	return NULL;
 }
