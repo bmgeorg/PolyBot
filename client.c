@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
+#include <stdbool.h>
+#include <sys/types.h>	//for uint32_t
 #include <string.h>     //for memset()
 #include <sys/socket.h> //for socket(), connect(), sendto(), and recvfrom()
 #include <unistd.h>     //for close()
 #include <netdb.h>		//for addrinfo
-#include <stdbool.h>
+#include <signal.h>		//for alarm timeout
 
 //command line arguments
 char* serverHost;
@@ -16,6 +16,7 @@ int N; //4 <= N <= 8
 
 //other data
 int sock = -1;
+const int TIMEOUT = 5;
 
 void quit(char *msg) {
 	fprintf(stderr, "%s\n", msg);
@@ -80,6 +81,25 @@ void setupSocket() {
 	freeaddrinfo(serverAddr);
 }
 
+//the alarm handler for the timeout alarm
+void timedOut(int ignored) {
+	quit("Timed out without receiving server response");
+}
+
+void setupTimeoutHandler() {
+	//create alarm and set handler
+    struct sigaction handler;
+    handler.sa_handler = timedOut;
+    //block everything in handler
+    if(sigfillset(&handler.sa_mask) < 0) {
+    	quit("sigfillset() failed");
+    }
+    handler.sa_flags = 0;
+    if(sigaction(SIGALRM, &handler, 0) < 0) {
+    	quit("sigaction() failed for SIGALRM");
+    }
+}
+
 /*
 	Send request, receive and reassemble response
 	Exit if you don't receive entire response after TIMEOUT seconds
@@ -101,13 +121,24 @@ void* sendRequest(char* requestString) {
 	
 	//send request
 	int numBytesSent = send(sock, request, requestLen, 0);
+	if(numBytesSent < 0) {
+		quit("send() failed");
+	}
+	else if(numBytesSent != requestLen) {
+		quit("send() sent unexpected number of bytes");
+	}
+	printf("Sent request\n");
 	//start timeout timer
-	//reassemble response
-	//return data
+	alarm(TIMEOUT);
+	
+	while(true) {}
+	
+	//reassemble response messages
 	
 	//update ID for next call
 	ID++;
 	
+	//return data
 	return NULL;
 }
 
@@ -121,14 +152,17 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 	setupSocket();
-	tracePolygon(N, true);
-	tracePolygon(N-1, false);
-	
+	setupTimeoutHandler();
 	printf("%s\n", serverHost);
 	printf("%s\n", serverPort);
 	printf("%f\n", L);
 	printf("%d\n", N);
 	printf("%d\n", sock);
+	
+	sendRequest("move 59.2");
+	
+	//tracePolygon(N, true);
+	//tracePolygon(N-1, false);
 
 	return 0;
 }
