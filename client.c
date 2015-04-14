@@ -17,6 +17,7 @@ int N; //4 <= N <= 8
 //other data
 int sock = -1;
 const int TIMEOUT = 5;
+const int MAX_MESSAGE_SIZE = 1000;
 
 void quit(char *msg) {
 	fprintf(stderr, "%s\n", msg);
@@ -91,13 +92,11 @@ void setupTimeoutHandler() {
     struct sigaction handler;
     handler.sa_handler = timedOut;
     //block everything in handler
-    if(sigfillset(&handler.sa_mask) < 0) {
+    if(sigfillset(&handler.sa_mask) < 0)
     	quit("sigfillset() failed");
-    }
     handler.sa_flags = 0;
-    if(sigaction(SIGALRM, &handler, 0) < 0) {
+    if(sigaction(SIGALRM, &handler, 0) < 0)
     	quit("sigaction() failed for SIGALRM");
-    }
 }
 
 /*
@@ -121,12 +120,10 @@ void* sendRequest(char* requestString) {
 	
 	//send request
 	int numBytesSent = send(sock, request, requestLen, 0);
-	if(numBytesSent < 0) {
+	if(numBytesSent < 0)
 		quit("send() failed");
-	}
-	else if(numBytesSent != requestLen) {
-		quit("send() sent unexpected number of bytes");
-	}
+	else if(numBytesSent != requestLen)
+		quit("send() didn't send the whole request");
 	printf("Sent request\n");
 	//start timeout timer
 	alarm(TIMEOUT);
