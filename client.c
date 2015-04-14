@@ -94,6 +94,12 @@ void* sendRequest(char* requestString) {
 	//start timeout timer
 	//reassemble response
 	//return data
+	
+	return NULL;
+}
+
+void tracePolygon(int numSides, bool clockwise) {
+
 }
 
 int main(int argc, char** argv) {
@@ -101,11 +107,14 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <L> <N>\n", argv[0]);
 		exit(1);
 	}
+	setupSocket();
+	tracePolygon(N, true);
+	tracePolygon(N-1, false);
+	
 	printf("%s\n", serverHost);
 	printf("%s\n", serverPort);
-	printf("%d\n", L);
+	printf("%f\n", L);
 	printf("%d\n", N);
-	setupSocket();
 	printf("%d\n", sock);
 
 	return 0;
