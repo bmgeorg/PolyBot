@@ -11,8 +11,8 @@
 //command line arguments
 char* serverHost;
 char* serverPort;
-uint32_t L;
-uint32_t N;
+double L; //L > 0
+int N; //4 <= N <= 8
 
 //other data
 int sock = -1;
