@@ -81,9 +81,24 @@ void setupSocket() {
 	freeaddrinfo(serverAddr);
 }
 
+/*
+	Send request, receive and reassemble response
+	Exit if you don't receive entire response after TIMEOUT seconds
+	Return pointer to response data
+	Return NULL if response contains no data
+*/
+void* sendRequest(char* requestString) {
+	//create id
+	//create request from id and requestString
+	//send request
+	//start timeout timer
+	//reassemble response
+	//return data
+}
+
 int main(int argc, char** argv) {
 	if(!parseArgs(argc, argv)) {
-		fprintf(stderr, "Usage: %s <server IP or host name> <server port> <L> <N>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <L> <N>\n", argv[0]);
 		exit(1);
 	}
 	printf("%s\n", serverHost);
