@@ -10,7 +10,7 @@
 #include <netdb.h>		//for addrinfo
 #include <signal.h>		//for alarm timeout
 
-const int RESPONSE_TIMEOUT = 5;
+const int RESPONSE_TIMEOUT = 1;
 const int RESPONSE_MESSAGE_SIZE = 1000;
 
 //UDP socket
@@ -20,7 +20,7 @@ int sock = -1;
 void setupSocket(char* serverHost, char* serverPort);
 void setupTimeoutHandler();
 void timedOut(int ignored);
-void* getResponseMessage(int ID, int* responseLength);
+void* recvMessage(int ID, int* messageLength);
 int getResponseID(char* responseMessage);
 void quit(char *msg);
 
@@ -36,6 +36,54 @@ void setupMessenger(char* serverHost, char* serverPort) {
 	Return pointer to response data
 */
 void* sendRequest(char* requestString, int* responseLength) {
+	static uint32_t ID = 0;
+	
+	//4 bytes for ID + requestString length + 1 byte for null char
+	int requestLen = 5+strlen(requestString);
+	void* request = malloc(requestLen);
+	
+	//insert ID
+	*((uint32_t*)request) = htonl(ID);
+	
+	//insert request string
+	memcpy(((char*)request)+4, requestString, strlen(requestString)+1);
+	
+	//send request
+	int numBytesSent = send(sock, request, requestLen, 0);
+	if(numBytesSent < 0)
+		quit("send() failed");
+	else if(numBytesSent != requestLen)
+		quit("send() didn't send the whole request");
+
+	//start timeout timer
+	alarm(RESPONSE_TIMEOUT);
+	
+	while(true) {}
+	
+	//get first message so we can allocate space for all messages
+	/*int responseLength;
+	void* responseMessage = getResponseMessage(ID, &responseLength);
+	int numMessages = getNumMessages(responseMessage);
+	int sequenceNumber = getSequenceNumber(responseMessage);
+	void** messages = malloc(sizeof(void*)*numMessages);
+	memset(messages, 0, sizeof(void*)*numMessages);
+	messages[sequenceNumber] = responseMessage;
+	int numMessagesReceived = 1;
+	//reassemble response messages
+	while(numMessagesReceived < numMessages) {
+		responseMessage = getResponseMessage(ID, &responseLength);
+		sequenceNumber = getSequenceNumber(responseMessage);
+		if(messages[sequenceNumber] != NULL) {
+			messages[sequenceNumber] = responseMessage;
+			numMessagesReceived++;
+		} else {
+			free(responseMessage);
+		}
+	}*/
+	
+	//update ID for next call
+	ID++;
+	
 	//return data
 	return NULL;
 }

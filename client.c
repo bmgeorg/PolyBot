@@ -8,7 +8,7 @@ double L; //L > 0
 int N; //4 <= N <= 8
 
 void tracePolygon(int numSides, bool clockwise) {
-
+	sendRequest("Hello world!", NULL);
 }
 
 int main(int argc, char** argv) {
