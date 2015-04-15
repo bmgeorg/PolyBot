@@ -21,12 +21,71 @@ void setupSocket(char* serverHost, char* serverPort);
 void setupTimeoutHandler();
 void timedOut(int ignored);
 void* recvMessage(int ID, int* messageLength);
-int getResponseID(char* responseMessage);
+int extractResponseID(char* responseMessage);
 void quit(char *msg);
 
 void setupMessenger(char* serverHost, char* serverPort) {
 	setupSocket(serverHost, serverPort);
 	setupTimeoutHandler();
+}
+
+/*
+	Resolve serverHost and serverPort, create socket, and connect() to server
+	By connecting to the server, we don't have to specify the sockaddr_in over and over
+	for every sendto(). We can use send() instead of sendto(), but send() will still
+	operate in a datagram, UDP fashion. See pages 61 and 62 of TCP/IP Sockets in C
+*/
+void setupSocket(char* serverHost, char* serverPort) {
+	struct addrinfo addrCriteria;
+	memset(&addrCriteria, 0, sizeof(addrCriteria));
+	addrCriteria.ai_family = AF_UNSPEC;
+	addrCriteria.ai_socktype = SOCK_DGRAM;
+	addrCriteria.ai_protocol = IPPROTO_UDP;
+
+	struct addrinfo *serverAddr;
+	int error = getaddrinfo(serverHost, serverPort, &addrCriteria, &serverAddr);
+	if(error != 0)
+		quit("could not get address information for host");
+
+	sock = -1;
+	//loop through addresses and try to connect() to each one
+	struct addrinfo* addr;
+	for(addr = serverAddr; addr != NULL; addr = addr->ai_next) {
+		sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+		if(sock < 0) {
+			//socket creation failed -- try next address
+			continue;
+		}
+		if(connect(sock, addr->ai_addr, addr->ai_addrlen) == 0) {
+			//socket connection succeeded
+			break;
+		}
+		//socket connection failed -- try next address
+		close(sock);
+		sock = -1;
+	}
+	
+	if(sock == -1)
+		quit("could not connect to host");
+	
+	freeaddrinfo(serverAddr);
+}
+
+void setupTimeoutHandler() {
+	//create alarm and set handler
+    struct sigaction handler;
+    handler.sa_handler = timedOut;
+    //block everything in handler
+    if(sigfillset(&handler.sa_mask) < 0)
+    	quit("sigfillset() failed");
+    handler.sa_flags = 0;
+    if(sigaction(SIGALRM, &handler, 0) < 0)
+    	quit("sigaction() failed for SIGALRM");
+}
+
+//the alarm handler for the timeout alarm
+void timedOut(int ignored) {
+	quit("Timed out without receiving server response");
 }
 
 /*
@@ -88,63 +147,25 @@ void* sendRequest(char* requestString, int* responseLength) {
 	return NULL;
 }
 
-/*
-	Resolve serverHost and serverPort, create socket, and connect() to server
-	By connecting to the server, we don't have to specify the sockaddr_in over and over
-	for every sendto(). We can use send() instead of sendto(), but send() will still
-	operate in a datagram, UDP fashion. See pages 61 and 62 of TCP/IP Sockets in C
-*/
-void setupSocket(char* serverHost, char* serverPort) {
-	struct addrinfo addrCriteria;
-	memset(&addrCriteria, 0, sizeof(addrCriteria));
-	addrCriteria.ai_family = AF_UNSPEC;
-	addrCriteria.ai_socktype = SOCK_DGRAM;
-	addrCriteria.ai_protocol = IPPROTO_UDP;
+int extractMessageID(char* message) {
+	return 0;
+}
 
-	struct addrinfo *serverAddr;
-	int error = getaddrinfo(serverHost, serverPort, &addrCriteria, &serverAddr);
-	if(error != 0)
-		quit("could not get address information for host");
-
-	sock = -1;
-	//loop through addresses and try to connect() to each one
-	struct addrinfo* addr;
-	for(addr = serverAddr; addr != NULL; addr = addr->ai_next) {
-		sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-		if(sock < 0) {
-			//socket creation failed -- try next address
-			continue;
+void* recvMessage(int ID, int* responseLength) {
+	void* message = malloc(RESPONSE_MESSAGE_SIZE);
+	while(true) {
+		int len = recv(sock, message, RESPONSE_MESSAGE_SIZE, 0);
+		if(len <= 0)
+			quit("server doesn't exist or recv() failed");
+		if(len < 12)
+			quit("improper server response message -- doesn't include required headers");
+		
+		//accept message if it matches request ID
+		if(extractMessageID(message) == ID) {
+			*responseLength = len;
+			return message;
 		}
-		if(connect(sock, addr->ai_addr, addr->ai_addrlen) == 0) {
-			//socket connection succeeded
-			break;
-		}
-		//socket connection failed -- try next address
-		close(sock);
-		sock = -1;
 	}
-	
-	if(sock == -1)
-		quit("could not connect to host");
-	
-	freeaddrinfo(serverAddr);
-}
-
-void setupTimeoutHandler() {
-	//create alarm and set handler
-    struct sigaction handler;
-    handler.sa_handler = timedOut;
-    //block everything in handler
-    if(sigfillset(&handler.sa_mask) < 0)
-    	quit("sigfillset() failed");
-    handler.sa_flags = 0;
-    if(sigaction(SIGALRM, &handler, 0) < 0)
-    	quit("sigaction() failed for SIGALRM");
-}
-
-//the alarm handler for the timeout alarm
-void timedOut(int ignored) {
-	quit("Timed out without receiving server response");
 }
 
 void quit(char *msg) {
