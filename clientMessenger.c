@@ -136,6 +136,10 @@ void* sendRequest(char* requestString, int* responseLength) {
 	//the other lengths we assume to be equal to RESPONSE_MESSAGE_SIZE
 	int lastMessageLength = numMessages == 1? messageLength : 0;
 	
+	printf("%d\n", extractMessageID(message));
+	printf("%d\n", extractNumMessages(message));
+	printf("%d\n", extractSequenceNum(message));
+	
 	int numReceived = 1;
 	//reassemble response messages
 	while(numReceived < numMessages) {
@@ -156,7 +160,7 @@ void* sendRequest(char* requestString, int* responseLength) {
 	//stop timer
 	alarm(0);
 	
-	*responseLength = (numMessages-1)*RESPONSE_MESSAGE_SIZE + lastMessageLength;
+	*responseLength = (numMessages-1)*RESPONSE_MESSAGE_SIZE + (lastMessageLength-12);
 	
 	void* fullResponse = malloc(*responseLength);
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12;
