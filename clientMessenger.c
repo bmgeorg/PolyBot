@@ -160,13 +160,18 @@ void* sendRequest(char* requestString, int* responseLength) {
 	
 	void* fullResponse = malloc(*responseLength);
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12;
-	for(i = 0; i < numMessages-1; i++)
-		memcpy(fullResponse+i*PAYLOAD_SIZE, messages[i]+12, PAYLOAD_SIZE);
+	for(i = 0; i < numMessages-1; i++) {
+		memcpy(((char*)fullResponse)+i*PAYLOAD_SIZE, ((char*)messages[i])+12, PAYLOAD_SIZE);
+		free(messages[i]);
+	}
 	//copy last message data
-	memcpy(fullResponse+(numMessages-1)*PAYLOAD_SIZE, messages[numMessages-1]+12, lastMessageLength);
-	
+	memcpy(((char*)fullResponse)+(numMessages-1)*PAYLOAD_SIZE, ((char*)messages[numMessages-1])+12, lastMessageLength);
+	free(messages[numMessages-1]);
+
 	//update ID for next call
 	ID++;
+	
+	free(messages);
 	
 	//return data
 	return fullResponse;
