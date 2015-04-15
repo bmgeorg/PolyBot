@@ -132,8 +132,8 @@ void* sendRequest(char* requestString, int* responseLength) {
 	
 	messages[i] = message;
 	
-	//only the last message's length is important; the rest we assume to be equal to
-	//RESPONSE_MESSAGE_SIZE
+	//only the last message's length is important
+	//the other lengths we assume to be equal to RESPONSE_MESSAGE_SIZE
 	int lastMessageLength = numMessages == 1? messageLength : 0;
 	
 	int numReceived = 1;
@@ -144,18 +144,32 @@ void* sendRequest(char* requestString, int* responseLength) {
 		if(messages[i] != NULL) {
 			messages[i] = message;
 			numReceived++;
+			
+			//if last message, record length
+			if(i == numMessages-1)
+				lastMessageLength = messageLength;
 		} else {
 			free(message);
 		}
 	}
 	
+	//stop timer
+	alarm(0);
+	
 	*responseLength = (numMessages-1)*RESPONSE_MESSAGE_SIZE + lastMessageLength;
+	
+	void* fullResponse = malloc(*responseLength);
+	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12;
+	for(i = 0; i < numMessages-1; i++)
+		memcpy(fullResponse+i*PAYLOAD_SIZE, messages[i]+12, PAYLOAD_SIZE);
+	//copy last message data
+	memcpy(fullResponse+(numMessages-1)*PAYLOAD_SIZE, messages[numMessages-1]+12, lastMessageLength);
 	
 	//update ID for next call
 	ID++;
 	
 	//return data
-	return NULL;
+	return fullResponse;
 }
 
 int extractMessageID(void* message) {
