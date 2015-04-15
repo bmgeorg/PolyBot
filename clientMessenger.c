@@ -20,8 +20,12 @@ int sock = -1;
 void setupSocket(char* serverHost, char* serverPort);
 void setupTimeoutHandler();
 void timedOut(int ignored);
+
 void* recvMessage(int ID, int* messageLength);
-int extractResponseID(char* responseMessage);
+int extractMessageID(void* message);
+int extractNumMessages(void* message);
+int extractSequenceNum(void* message);
+
 void quit(char *msg);
 
 void setupMessenger(char* serverHost, char* serverPort) {
@@ -117,28 +121,35 @@ void* sendRequest(char* requestString, int* responseLength) {
 	//start timeout timer
 	alarm(RESPONSE_TIMEOUT);
 	
-	while(true) {}
-	
 	//get first message so we can allocate space for all messages
-	/*int responseLength;
-	void* responseMessage = getResponseMessage(ID, &responseLength);
-	int numMessages = getNumMessages(responseMessage);
-	int sequenceNumber = getSequenceNumber(responseMessage);
+	int messageLength;
+	void* message = recvMessage(ID, &messageLength);
+	int numMessages = extractNumMessages(message);
+	int i = extractSequenceNum(message);
+	
 	void** messages = malloc(sizeof(void*)*numMessages);
 	memset(messages, 0, sizeof(void*)*numMessages);
-	messages[sequenceNumber] = responseMessage;
-	int numMessagesReceived = 1;
+	
+	messages[i] = message;
+	
+	//only the last message's length is important; the rest we assume to be equal to
+	//RESPONSE_MESSAGE_SIZE
+	int lastMessageLength = numMessages == 1? messageLength : 0;
+	
+	int numReceived = 1;
 	//reassemble response messages
-	while(numMessagesReceived < numMessages) {
-		responseMessage = getResponseMessage(ID, &responseLength);
-		sequenceNumber = getSequenceNumber(responseMessage);
-		if(messages[sequenceNumber] != NULL) {
-			messages[sequenceNumber] = responseMessage;
-			numMessagesReceived++;
+	while(numReceived < numMessages) {
+		message = recvMessage(ID, &messageLength);
+		i = extractSequenceNum(message);
+		if(messages[i] != NULL) {
+			messages[i] = message;
+			numReceived++;
 		} else {
-			free(responseMessage);
+			free(message);
 		}
-	}*/
+	}
+	
+	*responseLength = (numMessages-1)*RESPONSE_MESSAGE_SIZE + lastMessageLength;
 	
 	//update ID for next call
 	ID++;
@@ -147,11 +158,19 @@ void* sendRequest(char* requestString, int* responseLength) {
 	return NULL;
 }
 
-int extractMessageID(char* message) {
-	return 0;
+int extractMessageID(void* message) {
+	return ntohl(*((uint32_t*) message));
 }
 
-void* recvMessage(int ID, int* responseLength) {
+int extractNumMessages(void* message) {
+	return ntohl(*(((uint32_t*) message)+1));
+}
+
+int extractSequenceNum(void* message) {
+	return ntohl(*(((uint32_t*) message)+2));
+}
+
+void* recvMessage(int ID, int* messageLength) {
 	void* message = malloc(RESPONSE_MESSAGE_SIZE);
 	while(true) {
 		int len = recv(sock, message, RESPONSE_MESSAGE_SIZE, 0);
@@ -162,7 +181,7 @@ void* recvMessage(int ID, int* responseLength) {
 		
 		//accept message if it matches request ID
 		if(extractMessageID(message) == ID) {
-			*responseLength = len;
+			*messageLength = len;
 			return message;
 		}
 	}
