@@ -8,14 +8,7 @@ double L; //L > 0
 int N; //4 <= N <= 8
 
 void tracePolygon(int numSides, bool clockwise) {
-	int length;
-	char* response = sendRequest("", &length);
-	printf("Length: %d\n", length);
-	int i;
-	for(i = 0; i < length; i++) {
-		printf("%c", response[i]);
-	}
-	printf("\n");
+	
 }
 
 int main(int argc, char** argv) {
@@ -37,8 +30,16 @@ int main(int argc, char** argv) {
 	}
 	
 	setupMessenger(serverHost, serverPort);
+	//clientMessenger test code
+	int length;
+	char* response = sendRequest("", &length);
+	int i;
+	for(i = 0; i < length; i++) {
+		printf("%c", response[i]);
+	}
+	printf("\n");
 	
-	tracePolygon(N, true);
+	//tracePolygon(N, true);
 	//tracePolygon(N-1, false);
 
 	return 0;

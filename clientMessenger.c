@@ -136,16 +136,21 @@ void* sendRequest(char* requestString, int* responseLength) {
 	//the other lengths we assume to be equal to RESPONSE_MESSAGE_SIZE
 	int lastMessageLength = numMessages == 1? messageLength : 0;
 	
-	printf("%d\n", extractMessageID(message));
-	printf("%d\n", extractNumMessages(message));
-	printf("%d\n", extractSequenceNum(message));
-	
+	fprintf(stderr, "ID: %d\n", extractMessageID(message));
+	fprintf(stderr, "Total: %d\n", extractNumMessages(message));
+	fprintf(stderr, "Sequence: %d\n", extractSequenceNum(message));
+	fprintf(stderr, "Length: %d\n", messageLength);
+		
 	int numReceived = 1;
 	//reassemble response messages
 	while(numReceived < numMessages) {
 		message = recvMessage(ID, &messageLength);
 		i = extractSequenceNum(message);
-		if(messages[i] != NULL) {
+		fprintf(stderr, "ID: %d\n", extractMessageID(message));
+		fprintf(stderr, "Total: %d\n", extractNumMessages(message));
+		fprintf(stderr, "Sequence: %d\n", extractSequenceNum(message));
+		fprintf(stderr, "Length: %d\n", messageLength);
+		if(((char*)messages[i]) == NULL) {
 			messages[i] = message;
 			numReceived++;
 			
@@ -153,29 +158,33 @@ void* sendRequest(char* requestString, int* responseLength) {
 			if(i == numMessages-1)
 				lastMessageLength = messageLength;
 		} else {
+			fprintf(stderr, "duplicate message\n");
 			free(message);
 		}
 	}
+	fprintf(stderr, "Out of loop\n");
+	fprintf(stderr, "Last message length: %d\n", lastMessageLength);
 	
 	//stop timer
 	alarm(0);
 	
-	*responseLength = (numMessages-1)*RESPONSE_MESSAGE_SIZE + (lastMessageLength-12);
-	
-	void* fullResponse = malloc(*responseLength);
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12;
+	*responseLength = (numMessages-1)*PAYLOAD_SIZE + (lastMessageLength-12);
+	void* fullResponse = malloc(*responseLength);
 	for(i = 0; i < numMessages-1; i++) {
 		memcpy(((char*)fullResponse)+i*PAYLOAD_SIZE, ((char*)messages[i])+12, PAYLOAD_SIZE);
 		free(messages[i]);
 	}
 	//copy last message data
-	memcpy(((char*)fullResponse)+(numMessages-1)*PAYLOAD_SIZE, ((char*)messages[numMessages-1])+12, lastMessageLength);
+	memcpy(((char*)fullResponse)+(numMessages-1)*PAYLOAD_SIZE, ((char*)messages[numMessages-1])+12, lastMessageLength-12);
 	free(messages[numMessages-1]);
 
 	//update ID for next call
 	ID++;
 	
 	free(messages);
+	
+	fprintf(stderr, "Full response length: %d\n", *responseLength);
 	
 	//return data
 	return fullResponse;
