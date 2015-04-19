@@ -3,15 +3,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <math.h>
 
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
 
-double L; //L > 0
+double L; //L > 1
 int N; //4 <= N <= 8
 int fileCount = 0;
 
 void tracePolygon(int numSides, bool clockwise) {
+   int dummy;
+   
+   //Determine the angle the robot should turn.
+   double turnAngle = 180.0 - ((numSides - 2)*180.0/numSides);
+   turnAngle = internalAngle*2*M_PI/360;
+   
+   //Create a turn request for pi/4 radians per second.
+   char *turnRequest = (char *)malloc(50);
+   sprintf(turnRequest, "TURN %.10f", M_PI/4);
+   
+   //Take initial screenshot before making the polygon.
+   getSnapshot();
+
+   //Logic for tracing the polygon.
+   int i;
+   for(i = 0; i < numSides; i++) {
+      sendRequest("MOVE 1", &dummy);
+      //Wait for L seconds.
+      sendRequest("MOVE 0", &dummy);
+
+      getSnapshot();
+
+      sendRequest(turnRequest, &dummy);
+      //Wait for turnAngle/(M_PI/4)
+      sendRequest("TURN 0", &dummy);
+   }
 
 }
 
