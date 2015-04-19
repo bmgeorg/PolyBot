@@ -64,29 +64,6 @@ int main(int argc, char *argv[])
 		int numSent = sendto(sock, response, 1000, 0, (struct sockaddr *) &clientAddress, clientAddressSize);
 		printf("Sent %d bytes\n", numSent);
 		
-		response = malloc(1000);
-		memset(response, 'y', 1000);
-		response[0] = htonl(0);
-		response[1] = htonl(3);
-		response[2] = htonl(1);
-		numSent = sendto(sock, response, 1000, 0, (struct sockaddr *) &clientAddress, clientAddressSize);
-		printf("Sent %d bytes\n", numSent);
-		
-		response = malloc(1000);
-		memset(response, 'z', 1000);
-		response[0] = htonl(0);
-		response[1] = htonl(3);
-		response[2] = htonl(1);
-		numSent = sendto(sock, response, 1000, 0, (struct sockaddr *) &clientAddress, clientAddressSize);
-		printf("Sent %d bytes\n", numSent);
-		
-		/*response = malloc(200);
-		memset(response, 'a', 200);
-		response[0] = htonl(0);
-		response[1] = htonl(3);
-		response[2] = htonl(2);
-		numSent = sendto(sock, response, 200, 0, (struct sockaddr *) &clientAddress, clientAddressSize);
-		printf("Sent %d bytes\n", numSent);*/
 		fflush(stdout);
 	}
 	

@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 			}
 
 			/* Send response back to the client */
-			sendResponse(&(struct sockaddr) echoClntAddr, reqID, responseBuffTCP, 
+			sendResponse(&echoClntAddr, reqID, responseBuffTCP, 
 				sizeof(responseBuffTCP));
 
 		}

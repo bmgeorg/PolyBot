@@ -16,7 +16,7 @@ void setNumMessages(void* message, int numMessages);
 void setSequenceNum(void* message, int sequenceNum);
 void quit(char *msg);
 
-void sendResponse(struct sockaddr* recipient, int ID, void* response, int responseLength) {
+void sendResponse(struct sockaddr_in* recipient, int ID, void* response, int responseLength) {
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12; //subtract size for headers
 	int numMessages = responseLength/PAYLOAD_SIZE + (responseLength%PAYLOAD_SIZE == 0? 0 : 1);
 
@@ -54,7 +54,7 @@ void sendResponse(struct sockaddr* recipient, int ID, void* response, int respon
 		int size = RESPONSE_MESSAGE_SIZE;
 		if(i == numMessages-1 && responseLength%PAYLOAD_SIZE != 0)
 			size = 12+responseLength%PAYLOAD_SIZE;
-		int numSent = sendto(sock, messages[i], size, 0, recipient, sizeof(struct sockaddr));
+		int numSent = sendto(sock, messages[i], size, 0, (struct sockaddr*) recipient, sizeof(struct sockaddr_in));
 		if(numSent < 0)
 			quit("sendto() failed in serverMessenger");
 		else if(numSent != size)
