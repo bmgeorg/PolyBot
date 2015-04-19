@@ -8,7 +8,7 @@
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
 
-double L; //L > 1
+double L; //L >= 1
 int N; //4 <= N <= 8
 int fileCount = 0;
 
@@ -112,8 +112,8 @@ int main(int argc, char** argv) {
 	}
 	char* serverHost = argv[1];
 	char* serverPort = argv[2];
-	if(!sscanf(argv[3], "%lf", &L) || L <= 0) {
-		fprintf(stderr, "L must be greater than 0");
+	if(!sscanf(argv[3], "%lf", &L) || L <= 1) {
+		fprintf(stderr, "L must be at least 1");
 		exit(1);
 	}
 	N = atoi(argv[4]);
