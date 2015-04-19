@@ -13,16 +13,14 @@
 #include <signal.h>
 
 #define MAXLINE 500     /* Longest string to echo */
-#define NUM_MAX 10000000000 /* Max number */
 
 //Global Variables 
-char ipAddress[256];
 
 //Method Signatures
 char* getRobotID(char* msg);
 uint32_t getReqID(char* msg);
 char* getReq(char* msg);
-char* generateReq(char* robotIP, char* port, char* robotID, char* reqStr);
+char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
 
 void serverCNTCCode();
 
@@ -31,7 +29,7 @@ int main(int argc, char *argv[])
 {
 	if (argc != 3)    /* Test for correct number of parameters */
 	{
-		fprintf(stderr,"Usage:  %s <ROBOT IP> <PORT>\n", argv[0]);
+		fprintf(stderr,"Usage:  %s <server_port> <IP> <ID> <image_id>\n", argv[0]);
 		exit(1);
 	}
 	
@@ -50,6 +48,7 @@ int main(int argc, char *argv[])
 	// Robot info
 	char* robotIP;
 	char* robotID;
+	char* imageID;
 	uint32_t reqID;
 	char* reqStr;
 	char* request;
@@ -63,8 +62,10 @@ int main(int argc, char *argv[])
 	char sendline[MAXLINE+1];
 	char recvline[MAXLINE+1];
 
-	robotIP = argv[1];
-	echoServPort = atoi(argv[2]);  /* second arg:  local port */
+	echoServPort = atoi(argv[1]); 
+	robotIP = argv[2];
+	robotID = argv[3];
+	imageID = argv[4];
 
 	/* Create socket for sending/receiving datagrams */
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
@@ -100,19 +101,14 @@ int main(int argc, char *argv[])
 			//Don't send to robot, but don't exit program
 		}
 		else {
-			robotID = getRobotID(echoBuffer);
 			reqID = getReqID(echoBuffer);
 			reqStr = getReq(echoBuffer);
-			
-			//Send Ack
-			snprintf(returnBuffer, sizeof(returnBuffer), "%s received. Sending to robot now.", reqStr);
 			
 			if(sendto(sock, returnBuffer, strlen(returnBuffer), 0, 
 				(struct sockaddr *) &echoClntAddr, 
 				sizeof(echoClntAddr)) != sizeof(returnBuffer)) {
 				fprintf(stderr,"sendto() sent a different number of bytes than expected\n");
 			}
-
 
 			//SEND HTTP GET REQUEST
 
@@ -144,7 +140,7 @@ int main(int argc, char *argv[])
 			}
 		
 			//Send
-			request = generateReq(robotIP, argv[2], robotID, reqStr);
+			request = generateReq(robotIP, robotID, reqStr, imageID);
 			if (write(sockfd, request, sizeof(request)) != sizeof(request)) {
 				printf("Write error.\n");
 				return 1;
@@ -153,6 +149,7 @@ int main(int argc, char *argv[])
 			//Read response
 			while( ( n = read(sockfd, recvline, MAXLINE)) > 0) {
 				recvline[n] = 0;
+				//SHOULD OUTPUT TO MEM CHUNK AND THEN SEND TODO
 				if(fputs(recvline, stdout) == EOF) {
 					fprintf(stderr, "fputs error");
 				}
@@ -160,6 +157,7 @@ int main(int argc, char *argv[])
 
 			/* Send response back to the client */
 			//TODO: set returnBuffer with response from robot
+			//SEND BLANK IF move or turn or stop
 			if(sendto(sock, returnBuffer, sizeof(returnBuffer), 0, 
 					(struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(returnBuffer)) {
 				fprintf(stderr,"sendto() sent a different number of bytes than expected\n");
@@ -171,7 +169,6 @@ int main(int argc, char *argv[])
 
 char* getRobotID(char* msg) {
 
-
 }
 
 uint32_t getReqID(char* msg) {
@@ -182,26 +179,26 @@ char* getReq(char* msg) {
 	
 }
 
-//TODO: getting number out of it
-char* generateReq(char* robotIP, char* port, char* robotID, char* reqStr) {
+//TODO: getting number out of it for move and turn
+char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	char* request;
 	request = (char*) malloc(sizeof(char)*MAXLINE);
 	
 	int n = 0;
 	if(strstr(reqStr, "MOVE") != NULL) {
-		sprintf(request, "http://%s:%s/twist?id=%s&lx=%d\0",robotIP,port,robotID, n);
+		sprintf(request, "http://%s:8082/twist?id=%s&lx=%d\0",robotIP,robotID, n);
 	} else if(strstr(reqStr, "TURN") != NULL) {
-		sprintf(request, "http://%s:%s/twist?id=%s&az=%d\0",robotIP,port,robotID,n);
+		sprintf(request, "http://%s:8082/twist?id=%s&az=%d\0",robotIP,robotID,n);
 	} else if(strstr(reqStr, "STOP") != NULL) {
-		sprintf(request, "http://%s:%s/twist?id=%s&lx=0\0",robotIP,port,robotID);
+		sprintf(request, "http://%s:8082/twist?id=%s&lx=0\0",robotIP,robotID);
 	} else if(strstr(reqStr, "GET IMAGE") != NULL) {
-		sprintf(request, "http://%s:%s/snapshot?topic=/robot_%s/image?width=600?height=500", robotIP, port, robotID);
+		sprintf(request, "http://%s:8081/snapshot?topic=/robot_%s/image?width=600?height=500", robotIP, imageID);
 	} else if(strstr(reqStr, "GET GPS") != NULL) {
-		sprintf(request, "http://%s:%s/state?id=%s\0",robotIP,port,robotID);
+		sprintf(request, "http://%s:8082/state?id=%s\0",robotIP,robotID);
 	} else if(strstr(reqStr, "GET DGPS") != NULL) {
-		sprintf(request, "http://%s:%s/state?id=%s\0",robotIP,port,robotID);
+		sprintf(request, "http://%s:8084/state?id=%s\0",robotIP,robotID);
 	} else if(strstr(reqStr, "GET LASERS") != NULL) {
-		sprintf(request, "http://%s:%s/state?id=%s\0",robotIP,port,robotID);
+		sprintf(request, "http://%s:8083/state?id=%s\0",robotIP,robotID);
 	} else {
 		sprintf(request, "invalid\0");
 	}
