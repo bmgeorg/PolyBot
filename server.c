@@ -1,5 +1,7 @@
+#include "serverMessenger.h"
+
 #include <stdio.h>
- #include <stdlib.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <string.h>     /* for memset() */
@@ -14,13 +16,12 @@
 
 #define MAXLINE 1000 
 
-//Global Variables 
-
 //Method Signatures
 char* getRobotID(char* msg);
 uint32_t getReqID(char* msg);
 char* getReq(char* msg);
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
+int checkIfOverflow(char* buff, int currentSize, int amtAdded);
 
 void serverCNTCCode();
 
@@ -61,6 +62,9 @@ int main(int argc, char *argv[])
 	struct sockaddr_in servaddr;
 	char sendline[MAXLINE+1];
 	char recvline[MAXLINE+1];
+	char* responseBuffTCP;
+	responseBuffTCP = malloc(sizeof(char)*1000);
+	int currentSize = 0;	
 
 	echoServPort = atoi(argv[1]); 
 	robotIP = argv[2];
@@ -154,15 +158,19 @@ int main(int argc, char *argv[])
 			//Read response
 			while( ( n = read(sockfd, recvline, MAXLINE)) > 0) {
 				recvline[n] = 0;
-				//SHOULD OUTPUT TO MEM CHUNK AND THEN SEND TODO
-				if(fputs(recvline, stdout) == EOF) {
-					fprintf(stderr, "fputs error");
-					continue;
+				if(checkIfOverflow(responseBuffTCP, currentSize, n) == 1) {
+					responseBuffTCP = realloc(responseBuffTCP, 
+						sizeof(2*(currentSize+n)));
 				}
+				
+				currentSize+= n;
+
+				strcat(responseBuffTCP, recvline);
 			}
 
 			/* Send response back to the client */
-			//Brett's function
+			sendResponse(&(struct sockaddr) echoClntAddr, reqID, responseBuffTCP, 
+				sizeof(responseBuffTCP));
 
 		}
 	}
@@ -173,7 +181,7 @@ char* getRobotID(char* msg) {
 }
 
 uint32_t getReqID(char* msg) {
-
+	
 }
 
 char* getReq(char* msg) {
@@ -205,6 +213,15 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	}
 
 	return request;
+}
+
+//Returns 1 if overflow
+int checkIfOverflow(char* buff, int currentSize, int amtAdded) {
+	if( (currentSize - sizeof(buff)) <= amtAdded  ) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 /* This routine contains the data printing that must occur before the program 
