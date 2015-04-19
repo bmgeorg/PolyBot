@@ -1,6 +1,8 @@
 #ifndef SERVER_MESSENGER_H
 #define SERVER_MESSENGER_H
 
+#include <netdb.h>	//for struct sockaddr*
+
 /*
 	serverMessenger handles all communication with robotClient. 
 */

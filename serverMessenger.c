@@ -7,7 +7,7 @@
 #include <string.h>     //for memset()
 #include <sys/socket.h> //for socket(), connect(), sendto(), and recvfrom()
 #include <unistd.h>     //for close()
-#include <netdb.h>		//for addrinfo
+#include <netdb.h>		//for struct sockaddr*
 
 const int RESPONSE_MESSAGE_SIZE = 1000;
 
