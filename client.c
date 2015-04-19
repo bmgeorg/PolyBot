@@ -4,19 +4,26 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+void tracePolygon(int numSides, bool clockwise);
+void getSnapshot();
+
 double L; //L > 0
 int N; //4 <= N <= 8
 int fileCount = 0;
 
 void tracePolygon(int numSides, bool clockwise) {
+
+}
+
+void getSnapshot() {
    int length;
    char *data;
 
-   FILE* imageFile;       //File for the image data received.
-   FILE* positionFile;    //File for the position data received.
+   FILE *imageFile;       //File for the image data received.
+   FILE *positionFile;    //File for the position data received.
 
-   char* imageFileName = (char *)malloc(10000);
-   char* positionFileName = (char *)malloc(10000);
+   char *imageFileName = (char *)malloc(50);
+   char *positionFileName = (char *)malloc(50);
 
    sprintf(imageFileName, "image-%d.png", fileCount);
    sprintf(positionFileName, "position-%d.txt", fileCount);
@@ -27,15 +34,48 @@ void tracePolygon(int numSides, bool clockwise) {
 
    //Get the image and write the data to the image file created.
    data = (char *)sendRequest("GET IMAGE", &length);
-   while(length != 0) {
+   while(length > 0) {
       fprintf(imageFile, "%c", *data++);
       --length;
    }
-
-
-
    
+   //The imageFile is no longer needed.
+   fclose(imageFile);
+
+   //Get GPS data from robot and print to positionFile
+   data = (char *)sendRequest("GET GPS", &length);
+   fprintf(positionFile, "GPS ");
+   while(length > 0) {
+      fprintf(positionFile, "%c", *data++);
+      --length;
+   }
+   fprintf(positionFile, "\n");
+
+   //Get DGPS data from robot and print to positionFile
+   data = (char *)sendRequest("GET DGPS", &length);
+   fprintf(positionFile, "DGPS ");
+   while(length > 0) {
+      fprintf(positionFile, "%c", *data++);
+      --length;
+   }
+   fprintf(positionFile, "\n");
+
+   //Get LASER data from robot and print to positionFile
+   data = (char *)sendRequest("GET LASERS", &length);
+   fprintf(positionFile, "LASERS ");
+   while(length > 0) {
+      fprintf(positionFile, "%c", *data++);
+      --length;
+   }
+   fprintf(positionFile, "\n");
+
+   fclose(positionFile);
+
+   return;
+
 }
+
+
 
 int main(int argc, char** argv) {
 	//get command line args
