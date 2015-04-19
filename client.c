@@ -12,6 +12,20 @@ int N; //4 <= N <= 8
 int fileCount = 0;
 
 void tracePolygon(int numSides, bool clockwise) {
+   int dummy;
+   char *moveRequest = (char *)malloc(50);
+   char *turnRequest = (char *)malloc(50);
+   char *stopMoveRequest = "MOVE 0";
+   char *stopTurnRequest = "TURN 0";
+   
+   
+   //Take initial screenshot before making the polygon.
+   getSnapshot();
+
+   int i;
+   for(i = 0; i < numSides; i++) {
+      sendRequest(
+   }
 
 }
 
