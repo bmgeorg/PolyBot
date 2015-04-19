@@ -12,7 +12,7 @@
 #include <time.h>       /* for time() */
 #include <signal.h>
 
-#define MAXLINE 500     /* Longest string to echo */
+#define MAXLINE 1000 
 
 //Global Variables 
 
@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
 		
 	/* Construct local address structure */
 	memset(&echoServAddr, 0, sizeof(echoServAddr));   /* Zero out structure */
-	echoServAddr.sin_family = AF_INET;                /* Internet address family */
-	echoServAddr.sin_addr.s_addr = htonl(INADDR_ANY); /* Any incoming interface */
+	echoServAddr.sin_family = AF_INET;             /* Internet address family */
+	echoServAddr.sin_addr.s_addr = htonl(INADDR_ANY);/* Any incoming interface */
 	echoServAddr.sin_port = htons(echoServPort);      /* Local port */
 
 	/* Bind to the local address */
@@ -91,7 +91,6 @@ int main(int argc, char *argv[])
 	{
 		/* Set the size of the in-out parameter */
 		cliAddrLen = sizeof(echoClntAddr);
-
 		memset(echoBuffer, 0, strlen(echoBuffer));
 		
 		/* Block until receive a guess from a client */
@@ -101,13 +100,18 @@ int main(int argc, char *argv[])
 			//Don't send to robot, but don't exit program
 		}
 		else {
+			if(strcmp(robotID, getRobotID(echoBuffer)) != 0) {
+				fprintf(stderr, "Robot ID's don't match\n");
+				continue;
+			}
 			reqID = getReqID(echoBuffer);
 			reqStr = getReq(echoBuffer);
 			
 			if(sendto(sock, returnBuffer, strlen(returnBuffer), 0, 
-				(struct sockaddr *) &echoClntAddr, 
-				sizeof(echoClntAddr)) != sizeof(returnBuffer)) {
+					(struct sockaddr *) &echoClntAddr, 
+					sizeof(echoClntAddr)) != sizeof(returnBuffer)) {
 				fprintf(stderr,"sendto() sent a different number of bytes than expected\n");
+				continue;
 			}
 
 			//SEND HTTP GET REQUEST
@@ -115,7 +119,7 @@ int main(int argc, char *argv[])
 			//Create Socket
 			if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 				printf("Error while creating the socket.\n");
-				return 1;
+				continue;
 			}
 
 			bzero(&servaddr, sizeof(servaddr));
@@ -127,8 +131,9 @@ int main(int argc, char *argv[])
 			if (servaddr.sin_addr.s_addr == -1) {
          	struct hostent *host = gethostbyname(argv[2]);
          	if (host == NULL) {
-           		printf("Unknown host error.\n");
-	         }
+           		fprintf(stderr, "Unknown host error.\n");
+	         	continue;
+				}
    	      servaddr.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
       	}
 		
@@ -136,14 +141,14 @@ int main(int argc, char *argv[])
 			if (connect(sockfd, (struct sockaddr *) &servaddr, 
 					sizeof(servaddr)) < 0) {
 				printf("Connect failed.\n");
-				return 1;
+				continue;
 			}
 		
 			//Send
 			request = generateReq(robotIP, robotID, reqStr, imageID);
 			if (write(sockfd, request, sizeof(request)) != sizeof(request)) {
 				printf("Write error.\n");
-				return 1;
+				continue;
 			}
 
 			//Read response
@@ -152,23 +157,19 @@ int main(int argc, char *argv[])
 				//SHOULD OUTPUT TO MEM CHUNK AND THEN SEND TODO
 				if(fputs(recvline, stdout) == EOF) {
 					fprintf(stderr, "fputs error");
+					continue;
 				}
 			}
 
 			/* Send response back to the client */
-			//TODO: set returnBuffer with response from robot
-			//SEND BLANK IF move or turn or stop
-			if(sendto(sock, returnBuffer, sizeof(returnBuffer), 0, 
-					(struct sockaddr *) &echoClntAddr, sizeof(echoClntAddr)) != sizeof(returnBuffer)) {
-				fprintf(stderr,"sendto() sent a different number of bytes than expected\n");
-			}
-		
+			//Brett's function
+
 		}
 	}
 }
 
 char* getRobotID(char* msg) {
-
+	
 }
 
 uint32_t getReqID(char* msg) {
