@@ -17,7 +17,7 @@ void tracePolygon(int numSides, bool clockwise) {
    
    //Determine the angle the robot should turn.
    double turnAngle = 180.0 - ((numSides - 2)*180.0/numSides);
-   turnAngle = internalAngle*2*M_PI/360;
+   turnAngle = turnAngle*2*M_PI/360;
    
    //Create a turn request for pi/4 radians per second.
    char *turnRequest = (char *)malloc(50);
