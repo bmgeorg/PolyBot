@@ -6,9 +6,35 @@
 
 double L; //L > 0
 int N; //4 <= N <= 8
+int fileCount = 0;
 
 void tracePolygon(int numSides, bool clockwise) {
-	
+   int length;
+   char *data;
+
+   FILE* imageFile;       //File for the image data received.
+   FILE* positionFile;    //File for the position data received.
+
+   char* imageFileName = (char *)malloc(10000);
+   char* positionFileName = (char *)malloc(10000);
+
+   sprintf(imageFileName, "image-%d.png", fileCount);
+   sprintf(positionFileName, "position-%d.txt", fileCount);
+   ++fileCount;
+
+   imageFile = fopen(imageFileName, "w+");
+   positionFile = fopen(positionFileName, "w+");
+
+   //Get the image and write the data to the image file created.
+   data = (char *)sendRequest("GET IMAGE", &length);
+   while(length != 0) {
+      fprintf(imageFile, "%c", *data++);
+      --length;
+   }
+
+
+
+   
 }
 
 int main(int argc, char** argv) {
