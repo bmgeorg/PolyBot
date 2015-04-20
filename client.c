@@ -40,6 +40,7 @@ void tracePolygon(int numSides, bool clockwise) {
    //Logic for tracing the polygon.
    int i;
    for(i = 0; i < numSides; i++) {
+      //Send a request to begin moving.
       timeSpent = getTime();
       sendRequest("MOVE 1", &dummy, COMMAND_TIMEOUT);
       timeSpent = getTime() - timeSpent;
@@ -50,13 +51,17 @@ void tracePolygon(int numSides, bool clockwise) {
       sleepTime -= waitSeconds;
       waitUSeconds = (int) (sleepTime*1000000);
 
+      //Wait until robot reaches destination.
       sleep(waitSeconds);
       usleep(waitUSeconds);
 
+      //Send a request to stop the robot.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
 
+      //Take Snapshot after movement has ended.
       getSnapshot();
 
+      //Send a request to begin turning.
       timeSpent = getTime();
       sendRequest(turnRequest, &dummy, COMMAND_TIMEOUT);
       timeSpent = getTime() - timeSpent;
@@ -67,9 +72,11 @@ void tracePolygon(int numSides, bool clockwise) {
       sleepTime -= waitSeconds;
       waitUSeconds = (int) (sleepTime*1000000);
 
+      //Wait until robot turns to correct orientation.
       sleep(waitSeconds);
       usleep(waitUSeconds);
 
+      //Send a request to stop turning.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
    }
 
