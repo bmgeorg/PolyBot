@@ -27,8 +27,7 @@ void tracePolygon(int numSides, bool clockwise) {
    int waitUSeconds;
    
    //Determine the angle the robot should turn.
-   double turnAngle = 180.0 - ((numSides - 2)*180.0/numSides);
-   turnAngle = turnAngle*2*M_PI/360;
+   double turnAngle = M_PI - ((numSides - 2)*M_PI/numSides);
    if(!clockwise) turnAngle = turnAngle*-1;
    
    //Create a turn request for pi/4 radians per second.
@@ -49,7 +48,7 @@ void tracePolygon(int numSides, bool clockwise) {
       sleepTime = L - timeSpent;
       waitSeconds = (int) sleepTime;
       sleepTime -= waitSeconds;
-      waitUSeconds = (int)(sleepTime*1000000);
+      waitUSeconds = (int) (sleepTime*1000000);
 
       sleep(waitSeconds);
       usleep(waitUSeconds);
@@ -61,7 +60,16 @@ void tracePolygon(int numSides, bool clockwise) {
       timeSpent = getTime();
       sendRequest(turnRequest, &dummy, COMMAND_TIMEOUT);
       timeSpent = getTime() - timeSpent;
-      //Wait for turnAngle/(M_PI/4)
+      
+      //Calculate wait time (turnAngle/(M_PI/4) - time spent in sendRequest).
+      sleepTime = turnAngle/(M_PI/4) - timeSpent;
+      waitSeconds = (int) sleepTime;
+      sleepTime -= waitSeconds;
+      waitUSeconds = (int) (sleepTime*1000000);
+
+      sleep(waitSeconds);
+      usleep(waitUSeconds);
+
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
    }
 
