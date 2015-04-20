@@ -55,12 +55,8 @@ int main(int argc, char *argv[])
 	char* request;
 
 	//TCP Socket
-	char* buffer;
-	size_t result;
 	int sockfd, n;
-	int sendbytes;
 	struct sockaddr_in servaddr;
-	char sendline[MAXLINE+1];
 	char recvline[MAXLINE+1];
 	char* responseBuffTCP;
 	responseBuffTCP = malloc(sizeof(char)*1000);
@@ -169,20 +165,23 @@ int main(int argc, char *argv[])
 			}
 
 			/* Send response back to the client */
-			//sendResponse(&echoClntAddr, reqID, responseBuffTCP, sizeof(responseBuffTCP));
+			sendResponse(sock, &echoClntAddr, cliAddrLen, reqID, responseBuffTCP, currentSize);
 
 		}
 	}
 }
 
+//TODO
 char* getRobotID(char* msg) {
 	
 }
 
+//TODO
 uint32_t getReqID(char* msg) {
 	
 }
 
+//TODO
 char* getReq(char* msg) {
 	
 }
@@ -194,21 +193,21 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	
 	int n = 0;
 	if(strstr(reqStr, "MOVE") != NULL) {
-		sprintf(request, "http://%s:8082/twist?id=%s&lx=%d\0",robotIP,robotID, n);
+		sprintf(request, "http://%s:8082/twist?id=%s&lx=%d",robotIP,robotID, n);
 	} else if(strstr(reqStr, "TURN") != NULL) {
-		sprintf(request, "http://%s:8082/twist?id=%s&az=%d\0",robotIP,robotID,n);
+		sprintf(request, "http://%s:8082/twist?id=%s&az=%d",robotIP,robotID,n);
 	} else if(strstr(reqStr, "STOP") != NULL) {
-		sprintf(request, "http://%s:8082/twist?id=%s&lx=0\0",robotIP,robotID);
+		sprintf(request, "http://%s:8082/twist?id=%s&lx=0",robotIP,robotID);
 	} else if(strstr(reqStr, "GET IMAGE") != NULL) {
 		sprintf(request, "http://%s:8081/snapshot?topic=/robot_%s/image?width=600?height=500", robotIP, imageID);
 	} else if(strstr(reqStr, "GET GPS") != NULL) {
-		sprintf(request, "http://%s:8082/state?id=%s\0",robotIP,robotID);
+		sprintf(request, "http://%s:8082/state?id=%s",robotIP,robotID);
 	} else if(strstr(reqStr, "GET DGPS") != NULL) {
-		sprintf(request, "http://%s:8084/state?id=%s\0",robotIP,robotID);
+		sprintf(request, "http://%s:8084/state?id=%s",robotIP,robotID);
 	} else if(strstr(reqStr, "GET LASERS") != NULL) {
-		sprintf(request, "http://%s:8083/state?id=%s\0",robotIP,robotID);
+		sprintf(request, "http://%s:8083/state?id=%s",robotIP,robotID);
 	} else {
-		sprintf(request, "invalid\0");
+		sprintf(request, "invalid");
 	}
 
 	return request;
