@@ -11,7 +11,6 @@
 #include <signal.h>		//for alarm timeout
 #include <assert.h>		//for assert()
 
-const int RESPONSE_TIMEOUT = 3;
 const int RESPONSE_MESSAGE_SIZE = 1000;
 
 //UDP socket
@@ -101,11 +100,11 @@ void timedOut(int ignored) {
 
 /*
 	Send request, receive and reassemble response
-	Exit if you don't receive entire response after TIMEOUT seconds
+	Exit if you don't receive entire response after timeout seconds
 	Set responseLength to total length of response
 	Return pointer to response data
 */
-void* sendRequest(char* requestString, int* responseLength) {
+void* sendRequest(char* requestString, int* responseLength, int timeout) {
 	static uint32_t ID = 0;
 	
 	//4 bytes for ID + robotID length + 1 byte for null char + requestString length + 1 byte for null char
@@ -131,7 +130,7 @@ void* sendRequest(char* requestString, int* responseLength) {
 	free(request);
 
 	//start timeout timer
-	alarm(RESPONSE_TIMEOUT);
+	alarm(timeout);
 	
 	//get first message so we can allocate space for all messages
 	int messageLength;

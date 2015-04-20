@@ -13,6 +13,9 @@ double L; //L >= 1
 int N; //4 <= N <= 8
 int fileCount = 0;
 
+const int COMMAND_TIMEOUT = 1;
+const int DATA_TIMEOUT = 5;
+
 void tracePolygon(int numSides, bool clockwise) {
    int dummy;
    
@@ -31,15 +34,15 @@ void tracePolygon(int numSides, bool clockwise) {
    //Logic for tracing the polygon.
    int i;
    for(i = 0; i < numSides; i++) {
-      sendRequest("MOVE 1", &dummy);
+      sendRequest("MOVE 1", &dummy, COMMAND_TIMEOUT);
       //Wait for L seconds.
-      sendRequest("STOP", &dummy);
+      sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
 
       getSnapshot();
 
-      sendRequest(turnRequest, &dummy);
+      sendRequest(turnRequest, &dummy, COMMAND_TIMEOUT);
       //Wait for turnAngle/(M_PI/4)
-      sendRequest("STOP", &dummy);
+      sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
    }
 
    return;
@@ -63,7 +66,7 @@ void getSnapshot() {
    positionFile = fopen(positionFileName, "w+");
 
    //Get the image and write the data to the image file created.
-   data = (char *)sendRequest("GET IMAGE", &length);
+   data = (char *)sendRequest("GET IMAGE", &length, DATA_TIMEOUT);
    //while(length > 0) {
    //   fprintf(imageFile, "%c", *data++);
    //   --length;
@@ -74,7 +77,7 @@ void getSnapshot() {
    fclose(imageFile);
 
    //Get GPS data from robot and print to positionFile
-   data = (char *)sendRequest("GET GPS", &length);
+   data = (char *)sendRequest("GET GPS", &length, DATA_TIMEOUT);
    fprintf(positionFile, "GPS ");
    //while(length > 0) {
    //   fprintf(positionFile, "%c", *data++);
@@ -85,7 +88,7 @@ void getSnapshot() {
    fprintf(positionFile, "\n");
 
    //Get DGPS data from robot and print to positionFile
-   data = (char *)sendRequest("GET DGPS", &length);
+   data = (char *)sendRequest("GET DGPS", &length, DATA_TIMEOUT);
    fprintf(positionFile, "DGPS ");
    //while(length > 0) {
    //   fprintf(positionFile, "%c", *data++);
@@ -96,7 +99,7 @@ void getSnapshot() {
    fprintf(positionFile, "\n");
 
    //Get LASER data from robot and print to positionFile
-   data = (char *)sendRequest("GET LASERS", &length);
+   data = (char *)sendRequest("GET LASERS", &length, DATA_TIMEOUT);
    fprintf(positionFile, "LASERS ");
    //while(length > 0) {
    //   fprintf(positionFile, "%c", *data++);
@@ -137,14 +140,6 @@ int main(int argc, char** argv) {
 	}
 	
 	setupMessenger(serverHost, serverPort, robotID);
-	//clientMessenger test code
-	int length;
-	char* response = sendRequest("", &length);
-	int i;
-	for(i = 0; i < length; i++) {
-		printf("%c", response[i]);
-	}
-	printf("\n");
 	
 	tracePolygon(N, true);
 	tracePolygon(N-1, false);
