@@ -117,6 +117,8 @@ void* sendRequest(char* requestString, int* responseLength) {
 		quit("send() failed");
 	else if(numBytesSent != requestLen)
 		quit("send() didn't send the whole request");
+	
+	free(request);
 
 	//start timeout timer
 	alarm(RESPONSE_TIMEOUT);
