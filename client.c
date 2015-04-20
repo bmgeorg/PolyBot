@@ -7,6 +7,7 @@
 
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
+void fail();
 
 double L; //L >= 1
 int N; //4 <= N <= 8
@@ -32,13 +33,13 @@ void tracePolygon(int numSides, bool clockwise) {
    for(i = 0; i < numSides; i++) {
       sendRequest("MOVE 1", &dummy);
       //Wait for L seconds.
-      sendRequest("MOVE 0", &dummy);
+      sendRequest("STOP", &dummy);
 
       getSnapshot();
 
       sendRequest(turnRequest, &dummy);
       //Wait for turnAngle/(M_PI/4)
-      sendRequest("TURN 0", &dummy);
+      sendRequest("STOP", &dummy);
    }
 
    return;
@@ -63,10 +64,11 @@ void getSnapshot() {
 
    //Get the image and write the data to the image file created.
    data = (char *)sendRequest("GET IMAGE", &length);
-   while(length > 0) {
-      fprintf(imageFile, "%c", *data++);
-      --length;
-   }
+   //while(length > 0) {
+   //   fprintf(imageFile, "%c", *data++);
+   //   --length;
+   //}
+   if(fwrite(data, 1, length, imageFile) != length) fail();
    
    //The imageFile is no longer needed.
    fclose(imageFile);
@@ -74,28 +76,34 @@ void getSnapshot() {
    //Get GPS data from robot and print to positionFile
    data = (char *)sendRequest("GET GPS", &length);
    fprintf(positionFile, "GPS ");
-   while(length > 0) {
-      fprintf(positionFile, "%c", *data++);
-      --length;
-   }
+   //while(length > 0) {
+   //   fprintf(positionFile, "%c", *data++);
+   //   --length;
+   //}
+   if(fwrite(data, 1, length, positionFile) != length) fail();
+
    fprintf(positionFile, "\n");
 
    //Get DGPS data from robot and print to positionFile
    data = (char *)sendRequest("GET DGPS", &length);
    fprintf(positionFile, "DGPS ");
-   while(length > 0) {
-      fprintf(positionFile, "%c", *data++);
-      --length;
-   }
+   //while(length > 0) {
+   //   fprintf(positionFile, "%c", *data++);
+   //   --length;
+   //}
+   if(fwrite(data, 1, length, positionFile) != length) fail();
+
    fprintf(positionFile, "\n");
 
    //Get LASER data from robot and print to positionFile
    data = (char *)sendRequest("GET LASERS", &length);
    fprintf(positionFile, "LASERS ");
-   while(length > 0) {
-      fprintf(positionFile, "%c", *data++);
-      --length;
-   }
+   //while(length > 0) {
+   //   fprintf(positionFile, "%c", *data++);
+   //   --length;
+   //}
+   if(fwrite(data, 1, length, positionFile) != length) fail();
+   
    fprintf(positionFile, "\n");
 
    fclose(positionFile);
@@ -103,6 +111,10 @@ void getSnapshot() {
    return;
 }
 
+void fail() {
+   fprintf("fwrite() failed\n");
+   exit(1);
+}
 
 
 int main(int argc, char** argv) {
