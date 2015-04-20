@@ -3,10 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <time.h>
 #include <math.h>
 
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
+double getTime();
 void fail();
 
 double L; //L >= 1
@@ -18,6 +21,10 @@ const int DATA_TIMEOUT = 5;
 
 void tracePolygon(int numSides, bool clockwise) {
    int dummy;
+   double timeSpent;
+   double sleepTime;
+   int waitSeconds;
+   int waitUSeconds;
    
    //Determine the angle the robot should turn.
    double turnAngle = 180.0 - ((numSides - 2)*180.0/numSides);
@@ -34,13 +41,26 @@ void tracePolygon(int numSides, bool clockwise) {
    //Logic for tracing the polygon.
    int i;
    for(i = 0; i < numSides; i++) {
+      timeSpent = getTime();
       sendRequest("MOVE 1", &dummy, COMMAND_TIMEOUT);
-      //Wait for L seconds.
+      timeSpent = getTime() - timeSpent;
+
+      //Calculate wait time (L - time spent in sendRequest).
+      sleepTime = L - timeSpent;
+      waitSeconds = (int) sleepTime;
+      sleepTime -= waitSeconds;
+      waitUSeconds = (int)(sleepTime*10000);
+
+      sleep(waitSeconds);
+      usleep(waitUSeconds);
+
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
 
       getSnapshot();
 
+      timeSpent = getTime();
       sendRequest(turnRequest, &dummy, COMMAND_TIMEOUT);
+      timeSpent = getTime() - timeSpent;
       //Wait for turnAngle/(M_PI/4)
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
    }
@@ -114,11 +134,17 @@ void getSnapshot() {
    return;
 }
 
+double getTime() {
+   struct timeval curTime;
+   (void) gettimeofday(&curTime, (struct timezone *)NULL);
+   return (((((double) curTime.tv_sec) * 10000000.0)
+      + (double) curTime.tv_usec) / 10000000.0);
+}
+
 void fail() {
    fprintf(stderr, "fwrite() failed\n");
    exit(1);
 }
-
 
 int main(int argc, char** argv) {
 	//get command line args
