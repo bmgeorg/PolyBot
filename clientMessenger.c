@@ -15,6 +15,7 @@ const int RESPONSE_MESSAGE_SIZE = 1000;
 
 //UDP socket
 int sock = -1;
+char* robotID;
 
 //private functions
 void setupSocket(char* serverHost, char* serverPort);
@@ -28,7 +29,8 @@ int extractSequenceNum(void* message);
 
 void quit(char *msg);
 
-void setupMessenger(char* serverHost, char* serverPort) {
+void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
+	robotID = _robotID;
 	setupSocket(serverHost, serverPort);
 	setupTimeoutHandler();
 }

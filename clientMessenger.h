@@ -10,7 +10,7 @@ extern const int RESPONSE_TIMEOUT;
 extern const int RESPONSE_MESSAGE_SIZE;
 
 //public functions
-void setupMessenger(char* serverHost, char* serverPort);
+void setupMessenger(char* serverHost, char* serverPort, char* robotID);
 
 /*
 	Send request, receive and reassemble response

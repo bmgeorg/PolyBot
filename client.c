@@ -112,7 +112,7 @@ void getSnapshot() {
 }
 
 void fail() {
-   fprintf("fwrite() failed\n");
+   fprintf(stderr, "fwrite() failed\n");
    exit(1);
 }
 
