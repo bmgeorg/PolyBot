@@ -119,23 +119,24 @@ void fail() {
 
 int main(int argc, char** argv) {
 	//get command line args
-	if(argc != 5) {
-		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <L> <N>\n", argv[0]);
+	if(argc != 6) {
+		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <ID> <L> <N>\n", argv[0]);
 		exit(1);	
 	}
 	char* serverHost = argv[1];
 	char* serverPort = argv[2];
-	if(!sscanf(argv[3], "%lf", &L) || L <= 1) {
+        char* robotID = argv[3];
+	if(!sscanf(argv[4], "%lf", &L) || L <= 1) {
 		fprintf(stderr, "L must be at least 1");
 		exit(1);
 	}
-	N = atoi(argv[4]);
+	N = atoi(argv[5]);
 	if(N < 4 || N > 8) {
 		fprintf(stderr, "N must be an integer the range [4, 8]");
 		exit(1);
 	}
 	
-	setupMessenger(serverHost, serverPort);
+	setupMessenger(serverHost, serverPort, robotID);
 	//clientMessenger test code
 	int length;
 	char* response = sendRequest("", &length);
