@@ -11,6 +11,7 @@ extern const int RESPONSE_MESSAGE_SIZE;
 
 //public functions
 //Send response, chunking into RESPONSE_MESSAGE_SIZE-sized chunks
-void sendResponse(struct sockaddr_in* recipient, int ID, void* response, int responseLength);
+void sendResponse(int sock, struct sockaddr_in* recipientAddr, int addressSize,
+	int ID, void* response, int responseLength);
 
 #endif

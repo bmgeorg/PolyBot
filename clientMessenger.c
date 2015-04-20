@@ -10,7 +10,7 @@
 #include <netdb.h>		//for addrinfo
 #include <signal.h>		//for alarm timeout
 
-const int RESPONSE_TIMEOUT = 1;
+const int RESPONSE_TIMEOUT = 3;
 const int RESPONSE_MESSAGE_SIZE = 1000;
 
 //UDP socket
@@ -216,6 +216,7 @@ void* recvMessage(int ID, int* messageLength) {
 			*messageLength = len;
 			return message;
 		}
+		printf("Received invalid response\n");
 	}
 }
 

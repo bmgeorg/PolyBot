@@ -169,8 +169,7 @@ int main(int argc, char *argv[])
 			}
 
 			/* Send response back to the client */
-			sendResponse(&echoClntAddr, reqID, responseBuffTCP, 
-				sizeof(responseBuffTCP));
+			//sendResponse(&echoClntAddr, reqID, responseBuffTCP, sizeof(responseBuffTCP));
 
 		}
 	}

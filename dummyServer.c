@@ -1,3 +1,4 @@
+#include "serverMessenger.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,7 +16,7 @@
 #include <sys/time.h>
 #include <assert.h>
 
-void quit(char *msg) {
+void fail(char *msg) {
 	fprintf(stderr, "%s\n", msg);
 	exit(1);
 }
@@ -32,7 +33,7 @@ int main(int argc, char *argv[])
     //create socket for sending/receiving datagrams
     int sock;
     if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        quit("socket() failed");
+        fail("socket() failed");
     }
 
     //construct local address structure
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
 
     //bind to the local address
     if(bind(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
-        quit("bind() failed");
+        fail("bind() failed");
     }
 	
 	while(true) {
@@ -55,14 +56,15 @@ int main(int argc, char *argv[])
 		int numReceived = recvfrom(sock, msg, MAX_SIZE, 0,
 			(struct sockaddr *) &clientAddress, &clientAddressSize);
 		printf("Received %d bytes\n", numReceived);
-		
-		uint32_t* response = malloc(1000);
-		memset(response, 'x', 1000);
-		response[0] = htonl(0);
-		response[1] = htonl(3);
-		response[2] = htonl(0);
-		int numSent = sendto(sock, response, 1000, 0, (struct sockaddr *) &clientAddress, clientAddressSize);
-		printf("Sent %d bytes\n", numSent);
+		perror(":");
+		int len = 987;
+		uint32_t* response = malloc(len);
+		memset(response, 'x', len);
+		//sendto(sock, response, len, 0, (struct sockaddr *) &clientAddress, clientAddressSize);
+		sendResponse(sock, &clientAddress, clientAddressSize, 0, response, len);
+		printf("size: %d\n", clientAddressSize);
+		printf("size: %lu\n", sizeof(struct sockaddr));
+		printf("Sent %d bytes of payload data\n", len);
 		
 		fflush(stdout);
 	}
