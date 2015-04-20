@@ -9,6 +9,7 @@
 #include <unistd.h>     //for close()
 #include <netdb.h>		//for addrinfo
 #include <signal.h>		//for alarm timeout
+#include <assert.h>		//for assert()
 
 const int RESPONSE_TIMEOUT = 3;
 const int RESPONSE_MESSAGE_SIZE = 1000;
@@ -30,9 +31,13 @@ int extractSequenceNum(void* message);
 void quit(char *msg);
 
 void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
-	robotID = _robotID;
+	assert(serverHost != NULL);
+	assert(serverPort != NULL);
+	assert(_robotID != NULL);
+
 	setupSocket(serverHost, serverPort);
 	setupTimeoutHandler();
+	robotID = _robotID;
 }
 
 /*
@@ -103,15 +108,18 @@ void timedOut(int ignored) {
 void* sendRequest(char* requestString, int* responseLength) {
 	static uint32_t ID = 0;
 	
-	//4 bytes for ID + requestString length + 1 byte for null char
-	int requestLen = 5+strlen(requestString);
+	//4 bytes for ID + robotID length + 1 byte for null char + requestString length + 1 byte for null char
+	int requestLen = 4+strlen(robotID)+1+strlen(requestString)+1;
 	void* request = malloc(requestLen);
 	
 	//insert ID
 	*((uint32_t*)request) = htonl(ID);
 	
+	//insert robotID string
+	memcpy(((char*)request)+4, robotID, strlen(robotID)+1);
+	
 	//insert request string
-	memcpy(((char*)request)+4, requestString, strlen(requestString)+1);
+	memcpy(((char*)request)+4+strlen(robotID)+1, requestString, strlen(requestString)+1);
 	
 	//send request
 	int numBytesSent = send(sock, request, requestLen, 0);
