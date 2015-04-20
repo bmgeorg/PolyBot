@@ -18,9 +18,10 @@ void tracePolygon(int numSides, bool clockwise) {
    //Determine the angle the robot should turn.
    double turnAngle = 180.0 - ((numSides - 2)*180.0/numSides);
    turnAngle = turnAngle*2*M_PI/360;
+   if(!clockwise) turnAngle = turnAngle*-1;
    
    //Create a turn request for pi/4 radians per second.
-   char *turnRequest = (char *)malloc(50);
+   char *turnRequest = (char *)malloc(20);
    sprintf(turnRequest, "TURN %.10f", M_PI/4);
    
    //Take initial screenshot before making the polygon.
@@ -40,6 +41,7 @@ void tracePolygon(int numSides, bool clockwise) {
       sendRequest("TURN 0", &dummy);
    }
 
+   return;
 }
 
 void getSnapshot() {
@@ -99,7 +101,6 @@ void getSnapshot() {
    fclose(positionFile);
 
    return;
-
 }
 
 
@@ -132,8 +133,8 @@ int main(int argc, char** argv) {
 	}
 	printf("\n");
 	
-	//tracePolygon(N, true);
-	//tracePolygon(N-1, false);
+	tracePolygon(N, true);
+	tracePolygon(N-1, false);
 
 	return 0;
 }
