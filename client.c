@@ -49,7 +49,7 @@ void tracePolygon(int numSides, bool clockwise) {
       sleepTime = L - timeSpent;
       waitSeconds = (int) sleepTime;
       sleepTime -= waitSeconds;
-      waitUSeconds = (int)(sleepTime*10000);
+      waitUSeconds = (int)(sleepTime*1000000);
 
       sleep(waitSeconds);
       usleep(waitUSeconds);
