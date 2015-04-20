@@ -1,4 +1,5 @@
 #include "clientMessenger.h"
+#include "quit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,8 +27,6 @@ void* recvMessage(int ID, int* messageLength);
 int extractMessageID(void* message);
 int extractNumMessages(void* message);
 int extractSequenceNum(void* message);
-
-void quit(char *msg);
 
 void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
 	assert(serverHost != NULL);
@@ -229,9 +228,4 @@ void* recvMessage(int ID, int* messageLength) {
 		}
 		printf("Received invalid response\n");
 	}
-}
-
-void quit(char *msg) {
-	fprintf(stderr, "%s\n", msg);
-	exit(1);
 }

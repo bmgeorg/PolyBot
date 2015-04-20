@@ -1,4 +1,5 @@
 #include "serverMessenger.h"
+#include "quit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,6 @@ const int RESPONSE_MESSAGE_SIZE = 1000;
 void setID(void* message, int ID);
 void setNumMessages(void* message, int numMessages);
 void setSequenceNum(void* message, int sequenceNum);
-void quit(char *msg);
 
 void sendResponse(int sock, struct sockaddr_in* recipientAddr, int addressSize, int ID, void* response, int responseLength) {
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12; //subtract size for headers
@@ -73,9 +73,4 @@ void setNumMessages(void* message, int numMessages) {
 
 void setSequenceNum(void* message, int sequenceNum) {
 	*(((uint32_t*) message)+2) = htonl(sequenceNum);
-}
-
-void quit(char *msg) {
-	fprintf(stderr, "%s\n", msg);
-	exit(1);
 }

@@ -1,4 +1,5 @@
 #include "clientMessenger.h"
+#include "quit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,7 +8,6 @@
 
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
-void fail();
 
 double L; //L >= 1
 int N; //4 <= N <= 8
@@ -71,7 +71,7 @@ void getSnapshot() {
    //   fprintf(imageFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, imageFile) != length) fail();
+   if(fwrite(data, 1, length, imageFile) != length) quit("fwrite failed");
    
    //The imageFile is no longer needed.
    fclose(imageFile);
@@ -83,7 +83,7 @@ void getSnapshot() {
    //   fprintf(positionFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, positionFile) != length) fail();
+   if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
 
@@ -94,7 +94,7 @@ void getSnapshot() {
    //   fprintf(positionFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, positionFile) != length) fail();
+   if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
 
@@ -105,7 +105,7 @@ void getSnapshot() {
    //   fprintf(positionFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, positionFile) != length) fail();
+   if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
    
    fprintf(positionFile, "\n");
 
@@ -113,12 +113,6 @@ void getSnapshot() {
 
    return;
 }
-
-void fail() {
-   fprintf(stderr, "fwrite() failed\n");
-   exit(1);
-}
-
 
 int main(int argc, char** argv) {
 	//get command line args
