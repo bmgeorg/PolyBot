@@ -186,14 +186,10 @@ uint32_t getReqID(char* msg) {
 
 char* getReq(char* msg) {
 	char* ptr = msg;
-	ptr += sizeof(uint32_t);
-	
+	char* ptr2;
 	//go through until second null ptr
-	char* ptr2 = strtok(ptr, "\0");
-	ptr2 = strtok(NULL, "\0");
-	
-	strcat(ptr2, "\0");
-
+	ptr2 = strstr(ptr, "\0");
+	ptr2 += 1;
 	return ptr2;
 }
 
