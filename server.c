@@ -197,11 +197,15 @@ char* getReq(char* msg) {
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	char* request;
 	request = (char*) malloc(sizeof(char)*MAXLINE);
-	
+	char* ptr;
 	int n = 0;
 	if(strstr(reqStr, "MOVE") != NULL) {
+		ptr = strpbrk(reqStr, "0123456789");
+		n = atoi(ptr);
 		sprintf(request, "http://%s:8082/twist?id=%s&lx=%d",robotIP,robotID, n);
 	} else if(strstr(reqStr, "TURN") != NULL) {
+		ptr = strpbrk(reqStr, "0123456789");
+		n = atoi(ptr);
 		sprintf(request, "http://%s:8082/twist?id=%s&az=%d",robotIP,robotID,n);
 	} else if(strstr(reqStr, "STOP") != NULL) {
 		sprintf(request, "http://%s:8082/twist?id=%s&lx=0",robotIP,robotID);
