@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
 #include <math.h>
 
 void tracePolygon(int numSides, bool clockwise);
