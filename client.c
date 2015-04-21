@@ -4,10 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <time.h>
 #include <math.h>
 
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
+double getTime();
 
 double L; //L >= 1
 int N; //4 <= N <= 8
@@ -18,10 +21,13 @@ const int DATA_TIMEOUT = 5;
 
 void tracePolygon(int numSides, bool clockwise) {
    int dummy;
+   double timeSpent;
+   double sleepTime;
+   int waitSeconds;
+   int waitUSeconds;
    
    //Determine the angle the robot should turn.
-   double turnAngle = 180.0 - ((numSides - 2)*180.0/numSides);
-   turnAngle = turnAngle*2*M_PI/360;
+   double turnAngle = M_PI - ((numSides - 2)*M_PI/numSides);
    if(!clockwise) turnAngle = turnAngle*-1;
    
    //Create a turn request for pi/4 radians per second.
@@ -34,14 +40,43 @@ void tracePolygon(int numSides, bool clockwise) {
    //Logic for tracing the polygon.
    int i;
    for(i = 0; i < numSides; i++) {
+      //Send a request to begin moving.
+      timeSpent = getTime();
       sendRequest("MOVE 1", &dummy, COMMAND_TIMEOUT);
-      //Wait for L seconds.
+      timeSpent = getTime() - timeSpent;
+
+      //Calculate wait time (L - time spent in sendRequest).
+      sleepTime = L - timeSpent;
+      waitSeconds = (int) sleepTime;
+      sleepTime -= waitSeconds;
+      waitUSeconds = (int) (sleepTime*1000000);
+
+      //Wait until robot reaches destination.
+      sleep(waitSeconds);
+      usleep(waitUSeconds);
+
+      //Send a request to stop the robot.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
 
+      //Take Snapshot after movement has ended.
       getSnapshot();
 
+      //Send a request to begin turning.
+      timeSpent = getTime();
       sendRequest(turnRequest, &dummy, COMMAND_TIMEOUT);
-      //Wait for turnAngle/(M_PI/4)
+      timeSpent = getTime() - timeSpent;
+      
+      //Calculate wait time (turnAngle/(M_PI/4) - time spent in sendRequest).
+      sleepTime = turnAngle/(M_PI/4) - timeSpent;
+      waitSeconds = (int) sleepTime;
+      sleepTime -= waitSeconds;
+      waitUSeconds = (int) (sleepTime*1000000);
+
+      //Wait until robot turns to correct orientation.
+      sleep(waitSeconds);
+      usleep(waitUSeconds);
+
+      //Send a request to stop turning.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
    }
 
@@ -114,15 +149,22 @@ void getSnapshot() {
    return;
 }
 
+double getTime() {
+   struct timeval curTime;
+   (void) gettimeofday(&curTime, (struct timezone *)NULL);
+   return (((((double) curTime.tv_sec) * 10000000.0)
+      + (double) curTime.tv_usec) / 10000000.0);
+}
+
 int main(int argc, char** argv) {
 	//get command line args
 	if(argc != 6) {
-		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <ID> <L> <N>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <robot ID> <L> <N>\n", argv[0]);
 		exit(1);	
 	}
 	char* serverHost = argv[1];
 	char* serverPort = argv[2];
-        char* robotID = argv[3];
+    char* robotID = argv[3];
 	if(!sscanf(argv[4], "%lf", &L) || L <= 1) {
 		fprintf(stderr, "L must be at least 1");
 		exit(1);
