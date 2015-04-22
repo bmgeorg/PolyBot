@@ -13,7 +13,7 @@ void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
 double getTime();
 
-double L; //L >= 1
+int L; //L >= 1
 int N; //4 <= N <= 8
 int fileCount = 0;
 
@@ -168,8 +168,9 @@ int main(int argc, char** argv) {
 	}
 	char* serverHost = argv[1];
 	char* serverPort = argv[2];
-    char* robotID = argv[3];
-	if(!sscanf(argv[4], "%lf", &L) || L <= 1) {
+        char* robotID = argv[3];
+        L = atoi(argv[4]);
+	if(L <= 1) {
 		fprintf(stderr, "L must be at least 1");
 		exit(1);
 	}
