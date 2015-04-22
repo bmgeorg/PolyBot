@@ -28,7 +28,7 @@ void serverCNTCCode();
 //Main Method
 int main(int argc, char *argv[])
 {
-	if (argc != 3)    /* Test for correct number of parameters */
+	if (argc != 5)    /* Test for correct number of parameters */
 	{
 		fprintf(stderr,"Usage:  %s <server_port> <IP> <ID> <image_id>\n", argv[0]);
 		exit(1);
