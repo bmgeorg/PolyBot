@@ -3,6 +3,8 @@
 
 #include <stdarg.h>
 
+#define DEBUG
+
 void _quit(const char *fmt, ...)
     __attribute__((format (printf, 1, 2)));
 
