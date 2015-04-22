@@ -126,6 +126,7 @@ int main(int argc, char *argv[])
 			//Read response from Robot
 			while( ( n = read(sockRobot, recvline, MAXLINE)) > 0) {
 				recvline[n] = 0;
+fprintf(stdout, "%s\n", recvline);
 				if(checkIfOverflow(responseBuffTCP, currentSize, n) == 1) {
 					responseBuffTCP = realloc(responseBuffTCP, 
 						sizeof(2*(currentSize+n)));
@@ -136,15 +137,18 @@ int main(int argc, char *argv[])
 				strcat(responseBuffTCP, recvline);
 			}
 			
+			//Parse Response from Robot
+			char* parsedResponse = malloc(currentSize);
+			parsedResponse = strstr(responseBuffTCP, "\r\n\r\n");
+fprintf(stdout, "%s\n", parsedResponse);
 			/* Send response back to the UDP client */
-			sendResponse(sockClient, &echoClntAddr, cliAddrLen, reqID, responseBuffTCP, currentSize);
+			sendResponse(sockClient, &echoClntAddr, cliAddrLen, reqID, parsedResponse, strlen(parsedResponse));
 
 		}
 	}
 	
 	free(responseBuffTCP);
 	free(request);
-
 }
 
 char* getRobotID(char* msg) {
@@ -194,7 +198,7 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	strcat(req, " HTTP/1.1\r\nProxy-Connection: close\r\nHost: ");
 	strcat(req, robotIP);
 	strcat(req, "\r\n\r\n");
-	
+fprintf(stdout, "%s", req);	
 	return req;
 }
 
