@@ -32,13 +32,13 @@ void tracePolygon(int numSides, bool clockwise) {
    
    //Determine the angle the robot should turn.
    double turnAngle = M_PI - ((numSides - 2)*M_PI/numSides);
-   if(!clockwise) turnAngle = -turnAngle;
    
    plog("Turn angle: %lf", turnAngle);
    
    //Create a turn request for pi/4 radians per second.
    char *turnRequest = (char *)malloc(20);
-   sprintf(turnRequest, "TURN %.10f", M_PI/4);
+   if(clockwise) sprintf(turnRequest, "TURN %.10f", -M_PI/4);
+   else sprintf(turnRequest, "TURN %.10f", M_PI/4);
    
    plog("Turn request: %s", turnRequest);
    
@@ -209,7 +209,7 @@ int main(int argc, char** argv) {
 	setupMessenger(serverHost, serverPort, robotID);
 		
 	tracePolygon(N, true);
-	//tracePolygon(N-1, false);
+	tracePolygon(N-1, false);
 
 	return 0;
 }
