@@ -1,18 +1,19 @@
 #include "clientMessenger.h"
+#include "quit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
 #include <math.h>
 
 void tracePolygon(int numSides, bool clockwise);
 void getSnapshot();
 double getTime();
-void fail();
 
-double L; //L >= 1
+int L; //L >= 1
 int N; //4 <= N <= 8
 int fileCount = 0;
 
@@ -46,15 +47,16 @@ void tracePolygon(int numSides, bool clockwise) {
       timeSpent = getTime() - timeSpent;
 
       //Calculate wait time (L - time spent in sendRequest).
-      sleepTime = L - timeSpent;
-      waitSeconds = (int) sleepTime;
-      sleepTime -= waitSeconds;
-      waitUSeconds = (int) (sleepTime*1000000);
+      if(L > timeSpent) {
+         sleepTime = L - timeSpent;
+         waitSeconds = (int) sleepTime;
+         sleepTime -= waitSeconds;
+         waitUSeconds = (int) (sleepTime*1000000);
 
-      //Wait until robot reaches destination.
-      sleep(waitSeconds);
-      usleep(waitUSeconds);
-
+         //Wait until robot reaches destination.
+         sleep(waitSeconds);
+         usleep(waitUSeconds);
+      }
       //Send a request to stop the robot.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
 
@@ -67,14 +69,16 @@ void tracePolygon(int numSides, bool clockwise) {
       timeSpent = getTime() - timeSpent;
       
       //Calculate wait time (turnAngle/(M_PI/4) - time spent in sendRequest).
-      sleepTime = turnAngle/(M_PI/4) - timeSpent;
-      waitSeconds = (int) sleepTime;
-      sleepTime -= waitSeconds;
-      waitUSeconds = (int) (sleepTime*1000000);
+      if(turnAngle/(M_PI/4) > timeSpent) {
+         sleepTime = turnAngle/(M_PI/4) - timeSpent;
+         waitSeconds = (int) sleepTime;
+         sleepTime -= waitSeconds;
+         waitUSeconds = (int) (sleepTime*1000000);
 
-      //Wait until robot turns to correct orientation.
-      sleep(waitSeconds);
-      usleep(waitUSeconds);
+         //Wait until robot turns to correct orientation.
+         sleep(waitSeconds);
+         usleep(waitUSeconds);
+      }
 
       //Send a request to stop turning.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
@@ -106,7 +110,7 @@ void getSnapshot() {
    //   fprintf(imageFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, imageFile) != length) fail();
+   if(fwrite(data, 1, length, imageFile) != length) quit("fwrite failed");
    
    //The imageFile is no longer needed.
    fclose(imageFile);
@@ -118,7 +122,7 @@ void getSnapshot() {
    //   fprintf(positionFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, positionFile) != length) fail();
+   if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
 
@@ -129,7 +133,7 @@ void getSnapshot() {
    //   fprintf(positionFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, positionFile) != length) fail();
+   if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
 
@@ -140,7 +144,7 @@ void getSnapshot() {
    //   fprintf(positionFile, "%c", *data++);
    //   --length;
    //}
-   if(fwrite(data, 1, length, positionFile) != length) fail();
+   if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
    
    fprintf(positionFile, "\n");
 
@@ -156,21 +160,17 @@ double getTime() {
       + (double) curTime.tv_usec) / 10000000.0);
 }
 
-void fail() {
-   fprintf(stderr, "fwrite() failed\n");
-   exit(1);
-}
-
 int main(int argc, char** argv) {
 	//get command line args
 	if(argc != 6) {
-		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <ID> <L> <N>\n", argv[0]);
+		fprintf(stderr, "Usage: %s <server IP or server host name> <server port> <robot ID> <L> <N>\n", argv[0]);
 		exit(1);	
 	}
 	char* serverHost = argv[1];
 	char* serverPort = argv[2];
         char* robotID = argv[3];
-	if(!sscanf(argv[4], "%lf", &L) || L <= 1) {
+        L = atoi(argv[4]);
+	if(L <= 1) {
 		fprintf(stderr, "L must be at least 1");
 		exit(1);
 	}

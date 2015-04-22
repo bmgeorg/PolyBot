@@ -1,4 +1,5 @@
 #include "serverMessenger.h"
+#include "quit.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,11 +17,6 @@
 #include <sys/time.h>
 #include <assert.h>
 
-void fail(char *msg) {
-	fprintf(stderr, "%s\n", msg);
-	exit(1);
-}
-
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
@@ -33,7 +29,7 @@ int main(int argc, char *argv[])
     //create socket for sending/receiving datagrams
     int sock;
     if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-        fail("socket() failed");
+        quit("socket() failed");
     }
 
     //construct local address structure
@@ -45,7 +41,7 @@ int main(int argc, char *argv[])
 
     //bind to the local address
     if(bind(sock, (struct sockaddr *) &serverAddress, sizeof(serverAddress)) < 0) {
-        fail("bind() failed");
+        quit("bind() failed");
     }
 	
 	while(true) {
