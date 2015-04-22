@@ -47,15 +47,16 @@ void tracePolygon(int numSides, bool clockwise) {
       timeSpent = getTime() - timeSpent;
 
       //Calculate wait time (L - time spent in sendRequest).
-      sleepTime = L - timeSpent;
-      waitSeconds = (int) sleepTime;
-      sleepTime -= waitSeconds;
-      waitUSeconds = (int) (sleepTime*1000000);
+      if(L > timeSpent) {
+         sleepTime = L - timeSpent;
+         waitSeconds = (int) sleepTime;
+         sleepTime -= waitSeconds;
+         waitUSeconds = (int) (sleepTime*1000000);
 
-      //Wait until robot reaches destination.
-      sleep(waitSeconds);
-      usleep(waitUSeconds);
-
+         //Wait until robot reaches destination.
+         sleep(waitSeconds);
+         usleep(waitUSeconds);
+      }
       //Send a request to stop the robot.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
 
@@ -68,14 +69,16 @@ void tracePolygon(int numSides, bool clockwise) {
       timeSpent = getTime() - timeSpent;
       
       //Calculate wait time (turnAngle/(M_PI/4) - time spent in sendRequest).
-      sleepTime = turnAngle/(M_PI/4) - timeSpent;
-      waitSeconds = (int) sleepTime;
-      sleepTime -= waitSeconds;
-      waitUSeconds = (int) (sleepTime*1000000);
+      if(turnAngle/(M_PI/4) > timeSpent) {
+         sleepTime = turnAngle/(M_PI/4) - timeSpent;
+         waitSeconds = (int) sleepTime;
+         sleepTime -= waitSeconds;
+         waitUSeconds = (int) (sleepTime*1000000);
 
-      //Wait until robot turns to correct orientation.
-      sleep(waitSeconds);
-      usleep(waitUSeconds);
+         //Wait until robot turns to correct orientation.
+         sleep(waitSeconds);
+         usleep(waitUSeconds);
+      }
 
       //Send a request to stop turning.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
