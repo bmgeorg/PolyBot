@@ -120,7 +120,7 @@ void tracePolygon(int numSides, bool clockwise) {
 }
 
 void getSnapshot() {
-   /*int length;
+   int length;
    char *data;
 
    FILE *imageFile;       //File for the image data received.
@@ -169,7 +169,6 @@ void getSnapshot() {
 
    free(data);
    fclose(positionFile);
-   */
 }
 
 double getTime() {
@@ -207,7 +206,7 @@ int main(int argc, char** argv) {
 	plog("Setting up clientMessenger");
 	
 	setupMessenger(serverHost, serverPort, robotID);
-		
+	
 	tracePolygon(N, true);
 	tracePolygon(N-1, false);
 
