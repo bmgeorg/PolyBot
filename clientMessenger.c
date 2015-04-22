@@ -1,5 +1,5 @@
 #include "clientMessenger.h"
-#include "quit.h"
+#include "utility.h"
 #include "setupClientSocket.inc"
 
 #include <stdio.h>

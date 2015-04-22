@@ -1,5 +1,5 @@
 #include "serverMessenger.h"
-#include "quit.h"
+#include "utility.h"
 #include "setupClientSocket.inc"
 
 #include <stdio.h>
@@ -29,8 +29,7 @@ void flushBuffersAndExit();
 int main(int argc, char *argv[])
 {
 	if(argc != 5) {
-		fprintf(stderr,"Usage:  %s <server_port> <robot_IP/robot_hostname> <robot_ID> <image_id>\n", argv[0]);
-		exit(1);
+		quit("Usage:  %s <server_port> <robot_IP/robot_hostname> <robot_ID> <image_id>", argv[0]);
 	}
 	//read args
 	unsigned short localUDPPort = atoi(argv[1]);
@@ -39,7 +38,9 @@ int main(int argc, char *argv[])
 	char* imageID = argv[4];
 	
 	printf("Read arguments\n");
-	
+	printf("Robot address: %s\n", robotAddress);
+	printf("Robot ID: %s\n", robotID);
+	printf("Image ID: %s\n", imageID);
 	
 	//listen for ctrl-c and call flushBuffersAndExit()
 	signal(SIGINT, flushBuffersAndExit);
