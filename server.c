@@ -1,8 +1,8 @@
 #include "serverMessenger.h"
 #include "quit.h"
+#include "setupSocket.inc"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <string.h>     /* for memset() */
@@ -14,8 +14,6 @@
 #include <unistd.h>     /* for close() */
 #include <time.h>       /* for time() */
 #include <signal.h>
-
-#include "setupSocket.inc"
 
 #define MAXLINE 1000 
 

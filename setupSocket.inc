@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h> /* for socket(), connect(), sendto(), and recvfrom() */
+#include <arpa/inet.h>  /* for sockaddr_in and inet_addr() */
+#include <netdb.h>
+#include <unistd.h>     /* for close() */
+#include <string.h>		/* for memset() */
+
 typedef enum {TCP, UDP} SocketType;
 
 //assume TCP unless isUDP is true

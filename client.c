@@ -167,12 +167,9 @@ int main(int argc, char** argv) {
 	}
 	
 	setupMessenger(serverHost, serverPort, robotID);
-	
-	int dummy;
-	sendRequest("TURN 1", &dummy, COMMAND_TIMEOUT);
-	
-	//tracePolygon(N, true);
-	//tracePolygon(N-1, false);
+		
+	tracePolygon(N, true);
+	tracePolygon(N-1, false);
 
 	return 0;
 }

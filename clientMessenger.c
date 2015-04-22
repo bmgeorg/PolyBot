@@ -1,5 +1,6 @@
 #include "clientMessenger.h"
 #include "quit.h"
+#include "setupSocket.inc"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +13,6 @@
 #include <netdb.h>		//for addrinfo
 #include <signal.h>		//for signal
 #include <assert.h>		//for assert()
-
-#include "setupSocket.inc"
 
 const int RESPONSE_MESSAGE_SIZE = 1000;
 
