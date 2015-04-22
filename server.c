@@ -177,7 +177,7 @@ uint32_t getReqID(char* msg) {
 char* getReq(char* msg) {
 	char* robotID = getRobotID(msg);
 
-	return msg+4+strlen(robotID);
+	return msg+5+strlen(robotID);
 }
 
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
