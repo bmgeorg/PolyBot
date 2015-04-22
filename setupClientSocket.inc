@@ -5,11 +5,19 @@
 #include <netdb.h>
 #include <unistd.h>     /* for close() */
 #include <string.h>		/* for memset() */
+#include <assert.h>		/* for assert() */
 
 typedef enum {SOCKET_TYPE_TCP, SOCKET_TYPE_UDP} SocketType;
 
 //assume TCP unless isUDP is true
 int setupClientSocket(char* serverHost, char* serverPort, SocketType type) {
+	assert(serverHost != NULL);
+	//skip http:// or https://
+	if(strstr(serverHost, "http://") == serverHost)
+		serverHost += 7;
+	else if(strstr(serverHost, "https://") == serverHost)
+		serverHost += 8;
+
 	struct addrinfo addrCriteria;
 	memset(&addrCriteria, 0, sizeof(addrCriteria));
 	addrCriteria.ai_family = AF_INET;
