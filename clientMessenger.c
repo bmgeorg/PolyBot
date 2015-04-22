@@ -1,6 +1,6 @@
 #include "clientMessenger.h"
 #include "quit.h"
-#include "setupSocket.inc"
+#include "setupClientSocket.inc"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,7 +35,7 @@ void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
 	assert(serverPort != NULL);
 	assert(_robotID != NULL);
 
-	sock = setupSocket(serverHost, serverPort, UDP);
+	sock = setupClientSocket(serverHost, serverPort, SOCKET_TYPE_TCP);
 	robotID = _robotID;
 }
 

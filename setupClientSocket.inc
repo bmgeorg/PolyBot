@@ -6,18 +6,18 @@
 #include <unistd.h>     /* for close() */
 #include <string.h>		/* for memset() */
 
-typedef enum {TCP, UDP} SocketType;
+typedef enum {SOCKET_TYPE_TCP, SOCKET_TYPE_UDP} SocketType;
 
 //assume TCP unless isUDP is true
-int setupSocket(char* serverHost, char* serverPort, SocketType type) {
+int setupClientSocket(char* serverHost, char* serverPort, SocketType type) {
 	struct addrinfo addrCriteria;
 	memset(&addrCriteria, 0, sizeof(addrCriteria));
 	addrCriteria.ai_family = AF_INET;
-	if(type == UDP) {
+	if(type == SOCKET_TYPE_UDP) {
 		addrCriteria.ai_socktype = SOCK_DGRAM;
 		addrCriteria.ai_protocol = IPPROTO_UDP;
 	}
-	else if(type == TCP) {
+	else if(type == SOCKET_TYPE_TCP) {
 		addrCriteria.ai_socktype = SOCK_STREAM;
 		addrCriteria.ai_protocol = IPPROTO_TCP;
 	}

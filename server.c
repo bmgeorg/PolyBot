@@ -1,6 +1,6 @@
 #include "serverMessenger.h"
 #include "quit.h"
-#include "setupSocket.inc"
+#include "setupClientSocket.inc"
 
 #include <stdio.h>
 #include <errno.h>
@@ -37,6 +37,9 @@ int main(int argc, char *argv[])
 	char* robotAddress = argv[2];
 	char* robotID = argv[3];
 	char* imageID = argv[4];
+	
+	printf("Read arguments\n");
+	
 	
 	//listen for ctrl-c and call flushBuffersAndExit()
 	signal(SIGINT, flushBuffersAndExit);
@@ -84,7 +87,7 @@ int main(int argc, char *argv[])
 		char* robotPort = getRobotPortForRequestStr(requestStr);
 		//Send HTTP request to robot
 		int robotSock;
-		if((robotSock = setupSocket(robotAddress, robotPort, TCP)) < 0) {
+		if((robotSock = setupClientSocket(robotAddress, robotPort, SOCKET_TYPE_TCP)) < 0) {
 			quit("could not connect to robot");
 		}	
 		char* httpRequest = generateHTTPRequest(robotAddress, robotID, requestStr, imageID);
