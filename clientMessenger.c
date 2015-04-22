@@ -95,10 +95,10 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	//the other lengths we assume to be equal to RESPONSE_MESSAGE_SIZE
 	int lastMessageLength = numMessages == 1? messageLength : 0;
 
-	plog("ID: %d\n", extractMessageID(message));
-	plog("Total: %d\n", extractNumMessages(message));
-	plog("Sequence: %d\n", extractSequenceNum(message));
-	plog("Length: %d\n", messageLength);
+	plog("ID: %d", extractMessageID(message));
+	plog("Total: %d", extractNumMessages(message));
+	plog("Sequence: %d", extractSequenceNum(message));
+	plog("Length: %d", messageLength);
 
 	int numReceived = 1;
 	//reassemble response messages
@@ -106,10 +106,10 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 		message = recvMessage(ID, &messageLength);
 		i = extractSequenceNum(message);
 
-		plog("ID: %d\n", extractMessageID(message));
-		plog("Total: %d\n", extractNumMessages(message));
-		plog("Sequence: %d\n", extractSequenceNum(message));
-		plog("Length: %d\n", messageLength);
+		plog("ID: %d", extractMessageID(message));
+		plog("Total: %d", extractNumMessages(message));
+		plog("Sequence: %d", extractSequenceNum(message));
+		plog("Length: %d", messageLength);
 
 		if(((char*)messages[i]) == NULL) {
 			messages[i] = message;
@@ -119,7 +119,7 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 			if(i == numMessages-1)
 				lastMessageLength = messageLength;
 		} else {
-			plog("duplicate message\n");
+			plog("duplicate message");
 			free(message);
 		}
 	}
@@ -144,9 +144,8 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	
 	free(messages);
 	
-	plog("Full response length: %d\n", *responseLength);
+	plog("Full response length: %d", *responseLength);
 	
-	//return data
 	return fullResponse;
 }
 
@@ -206,6 +205,6 @@ void* recvMessage(int ID, int* messageLength) {
 			*messageLength = len;
 			return message;
 		}
-		//printf("Received invalid response\n");
+		plog("Received invalid response");
 	}
 }
