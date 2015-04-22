@@ -38,11 +38,11 @@ int main(int argc, char *argv[])
 	signal(SIGINT, serverCNTCCode);
 	
 	//UDP Socket Variables
-	int sock;                        /* Socket */
+	int sockClient;                        /* Socket */
 	struct sockaddr_in echoServAddr; /* Local address */
 	struct sockaddr_in echoClntAddr; /* Client address */
 	unsigned int cliAddrLen; 
-	char echoBuffer[MAXLINE+1];        /* Buffer for incoming */
+	char clientBuffer[MAXLINE+1];        /* Buffer for incoming */
 	unsigned short echoServPort;     /* Server port */
 	int recvMsgSize;                 /* Size of received message */
 	
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	char* request;
 
 	//TCP Socket Variables
-	int sockfd, n;
+	int sockRobot, n;
 	struct sockaddr_in servaddr;
 	char recvline[MAXLINE+1];
 	char* responseBuffTCP;
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
 	//CREATE UDP SOCKET
 	/* Create socket for sending/receiving datagrams */
-	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((sockClient = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		fprintf(stderr,("socket() failed\n"));
 		exit(1);
 	}
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	echoServAddr.sin_port = htons(echoServPort);      /* Local port */
 
 	/* Bind to the local address */
-	if (bind(sock, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0) 
+	if (bind(sockClient, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0) 
 	{
 		fprintf(stderr, "bind() failed\n");
 		exit(1);
@@ -92,28 +92,28 @@ int main(int argc, char *argv[])
 	{
 		/* Set the size of the in-out parameter */
 		cliAddrLen = sizeof(echoClntAddr);
-		memset(echoBuffer, 0, strlen(echoBuffer));
+		memset(clientBuffer, 0, strlen(clientBuffer));
 		
 		/* Block until receive a guess from a client */
-		if ((recvMsgSize = recvfrom(sock, echoBuffer,MAXLINE, 0,
+		if ((recvMsgSize = recvfrom(sockClient, clientBuffer,MAXLINE, 0,
 				(struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0) {
 			fprintf(stderr, "recvfrom() failed\n");
 			//Don't send to robot, but don't exit program
 		}
 		else {
 			//Check Clients Request
-			reqID = getReqID(echoBuffer);
-			if(strcmp(robotID, getRobotID(echoBuffer)) != 0) {
+			reqID = getReqID(clientBuffer);
+			if(strcmp(robotID, getRobotID(clientBuffer)) != 0) {
 				fprintf(stderr, "Robot ID's don't match\n");
 				continue;
 			}
-			reqStr = getReq(echoBuffer);
+			reqStr = getReq(clientBuffer);
 			
 			//SEND HTTP GET REQUEST
 			
 			//CREATE TCP SOCKET
 			//Create Socket
-			if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+			if ( (sockRobot = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 				printf("Error while creating the socket.\n");
 				continue;
 			}
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 			}
 		
 			//Connect
-			if (connect(sockfd, (struct sockaddr *) &servaddr, 
+			if (connect(sockRobot, (struct sockaddr *) &servaddr, 
 					sizeof(servaddr)) < 0) {
 				printf("Connect failed.\n");
 				continue;
@@ -144,13 +144,13 @@ int main(int argc, char *argv[])
 		
 			//Send HTTP Req. to Robot
 			request = generateReq(robotIP, robotID, reqStr, imageID);
-			if (write(sockfd, request, sizeof(request)) != sizeof(request)) {
+			if (write(sockRobot, request, sizeof(request)) != sizeof(request)) {
 				printf("Write error.\n");
 				continue;
 			}
 
 			//Read response from Robot
-			while( ( n = read(sockfd, recvline, MAXLINE)) > 0) {
+			while( ( n = read(sockRobot, recvline, MAXLINE)) > 0) {
 				recvline[n] = 0;
 				if(checkIfOverflow(responseBuffTCP, currentSize, n) == 1) {
 					responseBuffTCP = realloc(responseBuffTCP, 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 			}
 			
 			/* Send response back to the UDP client */
-			sendResponse(sock, &echoClntAddr, cliAddrLen, reqID, responseBuffTCP, currentSize);
+			sendResponse(sockClient, &echoClntAddr, cliAddrLen, reqID, responseBuffTCP, currentSize);
 
 		}
 	}
