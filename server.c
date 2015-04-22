@@ -128,8 +128,8 @@ int main(int argc, char *argv[])
 				recvline[n] = 0;
 				fprintf(stdout, "%s\n", recvline);
 				if(checkIfOverflow(responseBuffTCP, currentSize, n) == 1) {
-					responseBuffTCP = realloc(responseBuffTCP, 
-						sizeof(2*(currentSize+n)));
+					int i = 2*(currentSize+n);
+					responseBuffTCP = realloc(responseBuffTCP, i);
 				}
 				
 				currentSize+= n;
