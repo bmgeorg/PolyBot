@@ -13,6 +13,8 @@
 #include <signal.h>		//for signal
 #include <assert.h>		//for assert()
 
+#include "setupSocket.inc"
+
 const int RESPONSE_MESSAGE_SIZE = 1000;
 
 //UDP socket
@@ -20,7 +22,6 @@ int sock = -1;
 char* robotID;
 
 //private functions
-void setupSocket(char* serverHost, char* serverPort);
 void setTimer(double seconds);
 void stopTimer();
 void timedOut(int ignored);
@@ -35,50 +36,8 @@ void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
 	assert(serverPort != NULL);
 	assert(_robotID != NULL);
 
-	setupSocket(serverHost, serverPort);
+	sock = setupSocket(serverHost, serverPort, UDP);
 	robotID = _robotID;
-}
-
-/*
-	Resolve serverHost and serverPort, create socket, and connect() to server
-	By connecting to the server, we don't have to specify the sockaddr_in over and over
-	for every sendto(). We can use send() instead of sendto(), but send() will still
-	operate in a datagram, UDP fashion. See pages 61 and 62 of TCP/IP Sockets in C
-*/
-void setupSocket(char* serverHost, char* serverPort) {
-	struct addrinfo addrCriteria;
-	memset(&addrCriteria, 0, sizeof(addrCriteria));
-	addrCriteria.ai_family = AF_UNSPEC;
-	addrCriteria.ai_socktype = SOCK_DGRAM;
-	addrCriteria.ai_protocol = IPPROTO_UDP;
-
-	struct addrinfo *serverAddr;
-	int error = getaddrinfo(serverHost, serverPort, &addrCriteria, &serverAddr);
-	if(error != 0)
-		quit("could not get address information for host");
-
-	sock = -1;
-	//loop through addresses and try to connect() to each one
-	struct addrinfo* addr;
-	for(addr = serverAddr; addr != NULL; addr = addr->ai_next) {
-		sock = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-		if(sock < 0) {
-			//socket creation failed -- try next address
-			continue;
-		}
-		if(connect(sock, addr->ai_addr, addr->ai_addrlen) == 0) {
-			//socket connection succeeded
-			break;
-		}
-		//socket connection failed -- try next address
-		close(sock);
-		sock = -1;
-	}
-	
-	if(sock == -1)
-		quit("could not connect to host");
-	
-	freeaddrinfo(serverAddr);
 }
 
 //the alarm handler for the timeout alarm
