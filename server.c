@@ -231,7 +231,7 @@ char* getPort(char* reqStr) {
 
 //Returns 1 if overflow
 int checkIfOverflow(char* buff, int currentSize, int amtAdded) {
-	if( (currentSize - sizeof(buff)) <= amtAdded  ) {
+	if( (currentSize - strlen(buff)) <= amtAdded  ) {
 		return 1;
 	} else {
 		return 0;
