@@ -181,6 +181,7 @@ char* getRequestStr(char* msg) {
 
 char* generateHTTPRequest(char* robotAddress, char* robotID, char* requestStr, char* imageID) {
 	char* URI = malloc(MAXLINE);
+	memset(URI, 0, MAXLINE);
 	double x;
 	if(sscanf(requestStr, "MOVE %lf", &x) == 1) {
 		sprintf(URI, "/twist?id=%s&lx=%lf", robotID, x);
@@ -209,6 +210,7 @@ char* generateHTTPRequest(char* robotAddress, char* robotID, char* requestStr, c
 	}
 
 	char* httpRequest = malloc(MAXLINE);
+	memset(httpRequest, 0, MAXLINE);
 	strcat(httpRequest, "GET ");
 	strcat(httpRequest, URI);
 	strcat(httpRequest, " HTTP/1.1\r\n");
@@ -224,8 +226,6 @@ char* generateHTTPRequest(char* robotAddress, char* robotID, char* requestStr, c
 	strcat(httpRequest, "Connection: close\r\n");
 	
 	strcat(httpRequest, "\r\n");
-	
-	fprintf(stderr, "HTTP Request:\n%s", httpRequest);	
 
 	free(URI);
 	return httpRequest;

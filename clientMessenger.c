@@ -34,8 +34,10 @@ void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
 	assert(serverHost != NULL);
 	assert(serverPort != NULL);
 	assert(_robotID != NULL);
-
-	sock = setupClientSocket(serverHost, serverPort, SOCKET_TYPE_TCP);
+	
+	sock = setupClientSocket(serverHost, serverPort, SOCKET_TYPE_UDP);	
+	if(sock < 0)
+		quit("could not set up socket to server");
 	robotID = _robotID;
 }
 
@@ -69,7 +71,7 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	//send request
 	int numBytesSent = send(sock, request, requestLen, 0);
 	if(numBytesSent < 0)
-		quit("send() failed");
+		quit("could not send request - send() failed");
 	else if(numBytesSent != requestLen)
 		quit("send() didn't send the whole request");
 	

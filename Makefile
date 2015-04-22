@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall
 PROGS =	robotClient robotServer dummyServer
-DEPS = utility.h utility.c Makefile
+DEPS = utility.h utility.c Makefile setupClientSocket.inc
 
 all: $(PROGS)
 

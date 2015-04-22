@@ -167,9 +167,12 @@ int main(int argc, char** argv) {
 	}
 	
 	setupMessenger(serverHost, serverPort, robotID);
+	
+	int dummy;
+	sendRequest("MOVE 1.0", &dummy, 1);
 		
-	tracePolygon(N, true);
-	tracePolygon(N-1, false);
+	//tracePolygon(N, true);
+	//tracePolygon(N-1, false);
 
 	return 0;
 }
