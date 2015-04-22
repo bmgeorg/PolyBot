@@ -22,6 +22,7 @@ char* getRobotID(char* msg);
 uint32_t getReqID(char* msg);
 char* getReq(char* msg);
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
+int getPort(char* robotCommand);
 int checkIfOverflow(char* buff, int currentSize, int amtAdded);
 void serverCNTCCode();
 
@@ -117,10 +118,12 @@ int main(int argc, char *argv[])
 				continue;
 			}
 
+			int TCPport = getPort(reqStr);
+			
 			bzero(&servaddr, sizeof(servaddr));
 			servaddr.sin_family = AF_INET;
-			servaddr.sin_port   = htons(atoi(argv[2]));
-			servaddr.sin_addr.s_addr = inet_addr(argv[2]);
+			servaddr.sin_port   = htons(TCPport);
+			servaddr.sin_addr.s_addr = inet_addr(robotIP);
 	
 			//Resolve Host
 			if (servaddr.sin_addr.s_addr == -1) {
@@ -208,6 +211,29 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	}
 
 	return request;
+}
+
+//Gets TCP Port
+int getPort(char* reqStr) {
+	
+	if(strstr(reqStr, "MOVE") != NULL) {
+		return 8082;
+	} else if(strstr(reqStr, "TURN") != NULL) {
+		return 8082;
+	} else if(strstr(reqStr, "STOP") != NULL) {
+		return 8082;
+	} else if(strstr(reqStr, "GET IMAGE") != NULL) {
+		return 8081;
+	} else if(strstr(reqStr, "GET GPS") != NULL) {
+		return 8082;
+	} else if(strstr(reqStr, "GET DGPS") != NULL) {
+		return 8084;
+	} else if(strstr(reqStr, "GET LASERS") != NULL) {
+		return 8083;
+	} else {
+		return 0;
+	}
+	
 }
 
 //Returns 1 if overflow
