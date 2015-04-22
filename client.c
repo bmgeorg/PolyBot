@@ -32,7 +32,7 @@ void tracePolygon(int numSides, bool clockwise) {
    
    //Determine the angle the robot should turn.
    double turnAngle = M_PI - ((numSides - 2)*M_PI/numSides);
-   if(!clockwise) turnAngle = turnAngle*-1;
+   if(!clockwise) turnAngle = -turnAngle;
    
    plog("Turn angle: %lf", turnAngle);
    
@@ -91,9 +91,15 @@ void tracePolygon(int numSides, bool clockwise) {
       
       plog("Time spent sending request and getting response: %lf", timeSpent);
       
+      /*
+      	Manual tests show that the actual speed of the robot is about .89*requested speed
+      	(with an absolute maximum speed of ~M_PI/4 radians/second)
+      	This is an unavoidable hack since we are working with flawed hardware.
+      */
+      const double actualSpeed = .89*M_PI/4;
       //Calculate wait time (turnAngle/(M_PI/4) - time spent in sendRequest).
-      if(turnAngle/(M_PI/4) > timeSpent) {
-         sleepTime = turnAngle/(M_PI/4) - timeSpent;
+      if(turnAngle/actualSpeed > timeSpent) {
+         sleepTime = turnAngle/actualSpeed - timeSpent;
          
          plog("waiting for %lf seconds", sleepTime);
          
