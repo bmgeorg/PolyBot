@@ -15,7 +15,7 @@
 #include <time.h>       /* for time() */
 #include <signal.h>
 
-#define MAXLINE 1000 
+#define MAXLINE 1000
 
 //Method Signatures
 char* getRobotID(char* msg);
@@ -29,7 +29,7 @@ void flushBuffersAndExit();
 int main(int argc, char *argv[])
 {
 	if(argc != 5) {
-		quit("Usage:  %s <server_port> <robot_IP/robot_hostname> <robot_ID> <image_id>", argv[0]);
+		quit("Usage: %s <server_port> <robot_IP/robot_hostname> <robot_ID> <image_id>", argv[0]);
 	}
 	//read args
 	unsigned short localUDPPort = atoi(argv[1]);
@@ -37,10 +37,10 @@ int main(int argc, char *argv[])
 	char* robotID = argv[3];
 	char* imageID = argv[4];
 	
-	printf("Read arguments\n");
-	printf("Robot address: %s\n", robotAddress);
-	printf("Robot ID: %s\n", robotID);
-	printf("Image ID: %s\n", imageID);
+	plog("Read arguments");
+	plog("Robot address: %s", robotAddress);
+	plog("Robot ID: %s", robotID);
+	plog("Image ID: %s", imageID);
 	
 	//listen for ctrl-c and call flushBuffersAndExit()
 	signal(SIGINT, flushBuffersAndExit);
@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
 	if((clientSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		quit("could not create client socket - socket() failed");
 	}
+	
+	plog("Created client socket: %d", clientSock);
 		
 	//Construct local address structure for talking to clients
 	struct sockaddr_in localAddress;
@@ -61,9 +63,13 @@ int main(int argc, char *argv[])
 	if(bind(clientSock, (struct sockaddr *) &localAddress, sizeof(localAddress)) < 0) {
 		quit("could not bind to client socket - bind() failed");
 	}
+	
+	plog("binded to client socket");
 
 	//Loop for each client request
 	for(;;) {
+		plog("Start loop to handle client request");
+	
 		//Receive request from client
 		struct sockaddr_in clientAddress;
 		unsigned int clientAddressLen = sizeof(clientAddress);	//in-out parameter
@@ -76,6 +82,8 @@ int main(int argc, char *argv[])
 				(struct sockaddr *) &clientAddress, &clientAddressLen)) < 0) {
 			quit("could not receive client request - recvfrom() failed");
 		}
+		
+		plog("Received request of %d bytes", recvMsgSize);
 
 		//Interpret client request
 		char* requestRobotID = getRobotID(clientBuffer);
@@ -83,18 +91,36 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "invalid request - robot ID's don't match\n");
 			continue;
 		}
+		
+		plog("Requested robot ID: %s", requestRobotID);
 
 		char* requestStr = getRequestStr(clientBuffer);
 		char* robotPort = getRobotPortForRequestStr(requestStr);
+		
+		plog("Request string: %s", requestStr);
+		plog("Calculated port: %s", robotPort);
+		
 		//Send HTTP request to robot
 		int robotSock;
 		if((robotSock = setupClientSocket(robotAddress, robotPort, SOCKET_TYPE_TCP)) < 0) {
 			quit("could not connect to robot");
 		}	
+		
+		plog("Set up robot socket: %d", robotSock);
+		
 		char* httpRequest = generateHTTPRequest(robotAddress, robotID, requestStr, imageID);
+		
+		plog("Created http request: %s", httpRequest);
+		
 		if(write(robotSock, httpRequest, strlen(httpRequest)) != strlen(httpRequest)) {
 			quit("could not send http request to robot - write() failed");
 		}
+		
+		plog("Sent http request to robot");
+		
+		free(httpRequest);
+		
+		plog("freed http request");
 
 		//Read response from Robot
 		int pos = 0;
@@ -106,18 +132,36 @@ int main(int argc, char *argv[])
 			pos += n;
 			httpResponse = realloc(httpResponse, pos+MAXLINE);
 		}
-		printf("Response:\n%s", httpResponse);
+
+		plog("Received http response of %d bytes", pos);
+		plog("http response: ");
+		#ifdef DEBUG
+		int j;
+		for(j = 0; j < pos; j++)
+			fprintf(stderr, "%c", httpResponse[j]);
+		#endif
 		
 		//Parse Response from Robot
 		char* httpBody = strstr(httpResponse, "\r\n\r\n")+4;
 		int httpBodyLength = (httpResponse+pos)-httpBody;
-		printf("Response length: %d\n", httpBodyLength);
+		
+		plog("http body of %d bytes", httpBodyLength);
+		plog("http body: ");
+		#ifdef DEBUG
+		for(j = 0; j < httpBodyLength; j++)
+			fprintf(stderr, "%c", httpBody[j]);
+		#endif
 		
 		//Send response back to the UDP client
 		uint32_t requestID = getRequestID(clientBuffer);
 		sendResponse(clientSock, &clientAddress, clientAddressLen, requestID, httpBody, httpBodyLength);
 		
+		plog("sent http body response to client");
+		
 		free(httpResponse);
+		
+		plog("freed http response");
+		plog("End loop to handle client request");
 	}
 }
 
