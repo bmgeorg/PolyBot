@@ -21,7 +21,7 @@
 char* getRobotID(char* msg);
 uint32_t getReqID(char* msg);
 char* getReq(char* msg);
-char* generateHTTPReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
+char* generateHTTPReq(char* robotAddress, char* robotID, char* reqStr, char* imageID);
 char* getPort(char* robotCommand);
 void flushBuffersAndExit();
 
@@ -29,23 +29,17 @@ void flushBuffersAndExit();
 int main(int argc, char *argv[])
 {
 	if (argc != 5) {
-		fprintf(stderr,"Usage:  %s <server_port> <IP> <ID> <image_id>\n", argv[0]);
+		fprintf(stderr,"Usage:  %s <server_port> <robot_IP/robot_hostname> <robot_ID> <image_id>\n", argv[0]);
 		exit(1);
 	}
 	
+	//listen for ctrl-c and call flushBuffersAndExit()
 	signal(SIGINT, flushBuffersAndExit);
 	
-	//UDP Socket Variables
-	int sockClient;                        /* Socket */
-	struct sockaddr_in echoServAddr; /* Local address */
-	struct sockaddr_in echoClntAddr; /* Client address */
-	unsigned int cliAddrLen; 
-	char clientBuffer[MAXLINE+1];        /* Buffer for incoming */
-	unsigned short echoServPort;     /* Server port */
-	int recvMsgSize;                 /* Size of received message */
+	unsigned short localUDPPort;	/* Server port */
 	
-	// Robot Variables
-	char* robotIP;
+	//Robot Variables
+	char* robotAddress;
 	char* robotID;
 	char* imageID;
 	uint32_t reqID;
@@ -57,88 +51,87 @@ int main(int argc, char *argv[])
 	char* responseBuffTCP;
 	responseBuffTCP = malloc(sizeof(char)*1000);
 
-	echoServPort = atoi(argv[1]); 
-	robotIP = argv[2];
+	localUDPPort = atoi(argv[1]); 
+	robotAddress = argv[2];
 	robotID = argv[3];
 	imageID = argv[4];
-
-	//CREATE UDP SOCKET
-	/* Create socket for sending/receiving datagrams */
-	if ((sockClient = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-		fprintf(stderr,("socket() failed\n"));
-		exit(1);
+	
+	
+	//Create socket for talking to clients
+	int clientSock;
+	if ((clientSock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		quit("socket() failed\n");
 	}
 		
-	/* Construct local address structure */
-	memset(&echoServAddr, 0, sizeof(echoServAddr));   /* Zero out structure */
-	echoServAddr.sin_family = AF_INET;             /* Internet address family */
-	echoServAddr.sin_addr.s_addr = htonl(INADDR_ANY);/* Any incoming interface */
-	echoServAddr.sin_port = htons(echoServPort);      /* Local port */
+	//Construct local address structure
+	struct sockaddr_in localAddress;
+	memset(&localAddress, 0, sizeof(localAddress));		//Zero out structure
+	localAddress.sin_family = AF_INET;					//Any Internet address family
+	localAddress.sin_addr.s_addr = htonl(INADDR_ANY);	//Any incoming interface
+	localAddress.sin_port = htons(localUDPPort);		//The port clients will sendto
 
-	/* Bind to the local address */
-	if (bind(sockClient, (struct sockaddr *) &echoServAddr, sizeof(echoServAddr)) < 0) 
-	{
-		fprintf(stderr, "bind() failed\n");
-		exit(1);
+	//Bind to the local address
+	if (bind(clientSock, (struct sockaddr *) &localAddress, sizeof(localAddress)) < 0) {
+		quit("bind() failed\n");
 	}
 
 	//HANDLE UDP CLIENT
-	for (;;) /* Run forever */
-	{
-		/* Set the size of the in-out parameter */
-		cliAddrLen = sizeof(echoClntAddr);
-		memset(clientBuffer, 0, strlen(clientBuffer));
+	//Run forever
+	for (;;) {
+		struct sockaddr_in clientAddress;
+		unsigned int clientAddressLen = sizeof(clientAddress);	//in-out parameter
+		char clientBuffer[MAXLINE+1];	//Buffer for incoming client requests
+		memset(clientBuffer, 0, MAXLINE+1);
 		
-		/* Block until receive a guess from a client */
-		if ((recvMsgSize = recvfrom(sockClient, clientBuffer,MAXLINE, 0,
-				(struct sockaddr *) &echoClntAddr, &cliAddrLen)) < 0) {
-			fprintf(stderr, "recvfrom() failed\n");
-			//Don't send to robot, but don't exit program
+		int recvMsgSize;
+		//Block until receive a guess from a client
+		if ((recvMsgSize = recvfrom(clientSock, clientBuffer, MAXLINE, 0,
+				(struct sockaddr *) &clientAddress, &clientAddressLen)) < 0) {
+			quit("recvfrom() failed\n");
 		}
-		else {
-			//Check Clients Request
-			reqID = getReqID(clientBuffer);
-			if(strcmp(robotID, getRobotID(clientBuffer)) != 0) {
-				fprintf(stderr, "Robot ID's don't match\n");
-				continue;
-			}
 
-			reqStr = NULL;
-			reqStr = getReq(clientBuffer);
-			
-			//SEND HTTP GET REQUEST
-			
-			sockRobot = setupSocket(robotIP, getPort(reqStr), TCP);
+		//Interpret Clients Request
+		reqID = getReqID(clientBuffer);
+		if(strcmp(robotID, getRobotID(clientBuffer)) != 0) {
+			fprintf(stderr, "Robot ID's don't match\n");
+			continue;
+		}
+
+		reqStr = NULL;
+		reqStr = getReq(clientBuffer);
 		
-			//Send HTTP Req. to Robot
-			request = generateHTTPReq(robotIP, robotID, reqStr, imageID);
-			if(write(sockRobot, request, strlen(request)) != strlen(request)) {
-				fprintf(stderr, "Write error.\n");
-				continue;
-			}
-
-			//Read response from Robot
-			int n;
-			int pos = 0;
-			char recvline[MAXLINE+1];
-			while( (n = read(sockRobot, recvline, MAXLINE)) > 0) {
-				printf("loop");
-				fflush(stdout);
-				memcpy(responseBuffTCP+pos, recvline, n);
-				pos += n;
-				responseBuffTCP = realloc(responseBuffTCP, pos+MAXLINE);
-				printf("postloop");
-				fflush(stdout);
-			}
-			printf("Response:\n%s", responseBuffTCP);
-			
-			//Parse Response from Robot
-			char* end = strstr(responseBuffTCP, "\r\n\r\n")+4;
-			int responseLength = (responseBuffTCP+pos)-end;
-			printf("Response length: %d\n", responseLength);
-			/* Send response back to the UDP client */
-			sendResponse(sockClient, &echoClntAddr, cliAddrLen, reqID, end, responseLength);
+		//SEND HTTP GET REQUEST
+		
+		sockRobot = setupSocket(robotAddress, getPort(reqStr), TCP);
+	
+		//Send HTTP Req. to Robot
+		request = generateHTTPReq(robotAddress, robotID, reqStr, imageID);
+		if(write(sockRobot, request, strlen(request)) != strlen(request)) {
+			fprintf(stderr, "Write error.\n");
+			continue;
 		}
+
+		//Read response from Robot
+		int n;
+		int pos = 0;
+		char recvline[MAXLINE+1];
+		while( (n = read(sockRobot, recvline, MAXLINE)) > 0) {
+			printf("loop");
+			fflush(stdout);
+			memcpy(responseBuffTCP+pos, recvline, n);
+			pos += n;
+			responseBuffTCP = realloc(responseBuffTCP, pos+MAXLINE);
+			printf("postloop");
+			fflush(stdout);
+		}
+		printf("Response:\n%s", responseBuffTCP);
+		
+		//Parse Response from Robot
+		char* end = strstr(responseBuffTCP, "\r\n\r\n")+4;
+		int responseLength = (responseBuffTCP+pos)-end;
+		printf("Response length: %d\n", responseLength);
+		/* Send response back to the UDP client */
+		sendResponse(clientSock, &clientAddress, clientAddressLen, reqID, end, responseLength);
 	}
 	
 	free(responseBuffTCP);
@@ -159,7 +152,7 @@ char* getReq(char* msg) {
 	return msg+5+strlen(robotID);
 }
 
-char* generateHTTPReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
+char* generateHTTPReq(char* robotAddress, char* robotID, char* reqStr, char* imageID) {
 	char* URI;
 	URI = (char*) malloc(sizeof(char)*MAXLINE);
 	char* ptr;
@@ -193,7 +186,7 @@ char* generateHTTPReq(char* robotIP, char* robotID, char* reqStr, char* imageID)
 	
 	//Host
 	strcat(req, "Host: ");
-	strcat(req, robotIP);
+	strcat(req, robotAddress);
 	strcat(req, ":");
 	strcat(req, getPort(reqStr));
 	strcat(req, "\r\n");
