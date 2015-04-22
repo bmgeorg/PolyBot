@@ -156,22 +156,23 @@ int main(int argc, char** argv) {
 	}
 	char* serverHost = argv[1];
 	char* serverPort = argv[2];
-        char* robotID = argv[3];
-        L = atoi(argv[4]);
-	if(L <= 1) {
-		fprintf(stderr, "L must be at least 1");
-		exit(1);
+	char* robotID = argv[3];
+	L = atoi(argv[4]);
+	if(L < 1) {
+		quit("L must be at least 1");
 	}
 	N = atoi(argv[5]);
 	if(N < 4 || N > 8) {
-		fprintf(stderr, "N must be an integer the range [4, 8]");
-		exit(1);
+		quit("N must be an integer the range [4, 8]");
 	}
 	
 	setupMessenger(serverHost, serverPort, robotID);
 	
-	tracePolygon(N, true);
-	tracePolygon(N-1, false);
+	int dummy;
+	sendRequest("TURN 1", &dummy, COMMAND_TIMEOUT);
+	
+	//tracePolygon(N, true);
+	//tracePolygon(N-1, false);
 
 	return 0;
 }
