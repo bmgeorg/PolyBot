@@ -19,6 +19,8 @@ void setSequenceNum(void* message, int sequenceNum);
 void sendResponse(int sock, struct sockaddr_in* recipientAddr, int addressSize, int ID, void* response, int responseLength) {
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12; //subtract size for headers
 	int numMessages = responseLength/PAYLOAD_SIZE + (responseLength%PAYLOAD_SIZE == 0? 0 : 1);
+	if(responseLength == 0)
+		numMessages = 1;
 
 	void* messages[numMessages];
 	
@@ -26,7 +28,7 @@ void sendResponse(int sock, struct sockaddr_in* recipientAddr, int addressSize, 
 	int i;
 	for(i = 0; i < numMessages; i++) {
 		int size = RESPONSE_MESSAGE_SIZE;
-		if(i == numMessages-1 && responseLength%PAYLOAD_SIZE != 0)
+		if(i == numMessages-1 && (responseLength%PAYLOAD_SIZE != 0 || responseLength == 0))
 			size = 12+responseLength%PAYLOAD_SIZE;
 		messages[i] = malloc(size);
 	}
@@ -38,7 +40,7 @@ void sendResponse(int sock, struct sockaddr_in* recipientAddr, int addressSize, 
 		setSequenceNum(messages[i], i);
 		int size = PAYLOAD_SIZE;
 		//only last message has a different size
-		if(i == numMessages-1 && responseLength%PAYLOAD_SIZE != 0)
+		if(i == numMessages-1 && (responseLength%PAYLOAD_SIZE != 0 || responseLength == 0))
 			size = responseLength%PAYLOAD_SIZE;
 		memcpy(((char*)messages[i])+12, ((char*)response)+i*PAYLOAD_SIZE, size);
 	}
@@ -46,7 +48,7 @@ void sendResponse(int sock, struct sockaddr_in* recipientAddr, int addressSize, 
 	//send all messages
 	for(i = 0; i < numMessages; i++) {
 		int size = RESPONSE_MESSAGE_SIZE;
-		if(i == numMessages-1 && responseLength%PAYLOAD_SIZE != 0)
+		if(i == numMessages-1 && (responseLength%PAYLOAD_SIZE != 0 || responseLength == 0))
 			size = 12+responseLength%PAYLOAD_SIZE;
 		int numSent = sendto(sock, messages[i], size, 0, (struct sockaddr*) recipientAddr, addressSize);
 		if(numSent < 0)
