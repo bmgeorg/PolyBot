@@ -25,7 +25,6 @@ uint32_t getReqID(char* msg);
 char* getReq(char* msg);
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
 char* getPort(char* robotCommand);
-int checkIfOverflow(char* buff, int currentSize, int amtAdded);
 void serverCNTCCode();
 
 //Main Method
@@ -57,11 +56,9 @@ int main(int argc, char *argv[])
 	char* request;
 
 	//TCP Socket Variables
-	int sockRobot, n;
-	char recvline[MAXLINE+1];
+	int sockRobot;
 	char* responseBuffTCP;
 	responseBuffTCP = malloc(sizeof(char)*1000);
-	int currentSize = 0;	
 
 	echoServPort = atoi(argv[1]); 
 	robotIP = argv[2];
@@ -124,26 +121,26 @@ int main(int argc, char *argv[])
 			}
 
 			//Read response from Robot
-			while( ( n = read(sockRobot, recvline, MAXLINE)) > 0) {
-				recvline[n] = 0;
-				fprintf(stdout, "%s\n", recvline);
-				if(checkIfOverflow(responseBuffTCP, currentSize, n) == 1) {
-					int i = 2*(currentSize+n);
-					responseBuffTCP = realloc(responseBuffTCP, i);
-				}
-				
-				currentSize+= n;
-
-				strcat(responseBuffTCP, recvline);
+			int n;
+			int pos = 0;
+			char recvline[MAXLINE+1];
+			while( (n = read(sockRobot, recvline, MAXLINE)) > 0) {
+				printf("loop");
+				fflush(stdout);
+				memcpy(responseBuffTCP+pos, recvline, n);
+				pos += n;
+				responseBuffTCP = realloc(responseBuffTCP, pos+MAXLINE);
+				printf("postloop");
+				fflush(stdout);
 			}
+			printf("Response:\n%s", responseBuffTCP);
 			
 			//Parse Response from Robot
-			char* parsedResponse = malloc(currentSize);
-			parsedResponse = strstr(responseBuffTCP, "\r\n\r\n");
-fprintf(stdout, "%s\n", parsedResponse);
+			char* end = strstr(responseBuffTCP, "\r\n\r\n")+4;
+			int responseLength = (responseBuffTCP+pos)-end;
+			printf("Response length: %d\n", responseLength);
 			/* Send response back to the UDP client */
-			sendResponse(sockClient, &echoClntAddr, cliAddrLen, reqID, parsedResponse, strlen(parsedResponse));
-
+			sendResponse(sockClient, &echoClntAddr, cliAddrLen, reqID, end, responseLength);
 		}
 	}
 	
@@ -199,6 +196,7 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	strcat(req, robotIP);
 	strcat(req, ":");
 	strcat(req, getPort(reqStr));
+	strcat(req, "\r\nConnection: close");
 	strcat(req, "\r\n\r\n");
 	fprintf(stdout, "Request:\n%s", req);	
 
@@ -227,15 +225,6 @@ char* getPort(char* reqStr) {
 		return "0";
 	}
 	
-}
-
-//Returns 1 if overflow
-int checkIfOverflow(char* buff, int currentSize, int amtAdded) {
-	if( (currentSize - strlen(buff)) <= amtAdded  ) {
-		return 1;
-	} else {
-		return 0;
-	}
 }
 
 /* This routine contains the data printing that must occur before the program 
