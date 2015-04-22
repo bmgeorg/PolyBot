@@ -23,7 +23,6 @@ uint32_t getReqID(char* msg);
 char* getReq(char* msg);
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
 int checkIfOverflow(char* buff, int currentSize, int amtAdded);
-
 void serverCNTCCode();
 
 //Main Method
@@ -37,7 +36,7 @@ int main(int argc, char *argv[])
 	
 	signal(SIGINT, serverCNTCCode);
 	
-	//UDP Socket
+	//UDP Socket Variables
 	int sock;                        /* Socket */
 	struct sockaddr_in echoServAddr; /* Local address */
 	struct sockaddr_in echoClntAddr; /* Client address */
@@ -46,7 +45,7 @@ int main(int argc, char *argv[])
 	unsigned short echoServPort;     /* Server port */
 	int recvMsgSize;                 /* Size of received message */
 	
-	// Robot info
+	// Robot Variables
 	char* robotIP;
 	char* robotID;
 	char* imageID;
@@ -54,7 +53,7 @@ int main(int argc, char *argv[])
 	char* reqStr;
 	char* request;
 
-	//TCP Socket
+	//TCP Socket Variables
 	int sockfd, n;
 	struct sockaddr_in servaddr;
 	char recvline[MAXLINE+1];
@@ -101,7 +100,6 @@ int main(int argc, char *argv[])
 			//Don't send to robot, but don't exit program
 		}
 		else {
-
 			//Check Clients Request
 			reqID = getReqID(echoBuffer);
 			if(strcmp(robotID, getRobotID(echoBuffer)) != 0) {
@@ -172,11 +170,11 @@ char* getRobotID(char* msg) {
 	char* ptr = msg;
 	ptr += sizeof(uint32_t);
 	
-	//go through until null ptr
-	char* ptr2 = strtok(ptr, "\0");
-	strcat(ptr2, "\0");
+	char* robotID;
+	robotID = malloc(sizeof(ptr)+1);
+	memcpy(&robotID, ptr, (sizeof(ptr)+1));
 
-	return ptr2;
+	return robotID;
 }
 
 uint32_t getReqID(char* msg) {
@@ -188,10 +186,13 @@ uint32_t getReqID(char* msg) {
 char* getReq(char* msg) {
 	char* ptr = msg;
 	char* ptr2;
-	//go through until second null ptr
-	ptr2 = strstr(ptr, "\0");
+	
+	ptr2 = strchr(ptr, '\0');
 	ptr2 += 1;
-	return ptr2;
+
+	char* req = malloc(sizeof(ptr2)+1);
+	memcpy(&req, ptr2, sizeof(ptr2)+1);
+	return req;
 }
 
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
