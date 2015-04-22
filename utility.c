@@ -8,6 +8,7 @@ void _quit(const char *fmt, ...) {
     va_start(arg, fmt);
     vfprintf(stderr, fmt, arg);
     va_end(arg);
+    fflush(stderr);
     exit(1);
 }
 
@@ -17,5 +18,6 @@ void _plog(const char *fmt, ...) {
     va_start(arg, fmt);
     vfprintf(stderr, fmt, arg);
     va_end(arg);
+    fflush(stderr);
 #endif
 }
