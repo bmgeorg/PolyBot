@@ -21,20 +21,19 @@
 char* getRobotID(char* msg);
 uint32_t getReqID(char* msg);
 char* getReq(char* msg);
-char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
+char* generateHTTPReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
 char* getPort(char* robotCommand);
-void serverCNTCCode();
+void flushBuffersAndExit();
 
 //Main Method
 int main(int argc, char *argv[])
 {
-	if (argc != 5)    /* Test for correct number of parameters */
-	{
+	if (argc != 5) {
 		fprintf(stderr,"Usage:  %s <server_port> <IP> <ID> <image_id>\n", argv[0]);
 		exit(1);
 	}
 	
-	signal(SIGINT, serverCNTCCode);
+	signal(SIGINT, flushBuffersAndExit);
 	
 	//UDP Socket Variables
 	int sockClient;                        /* Socket */
@@ -112,7 +111,7 @@ int main(int argc, char *argv[])
 			sockRobot = setupSocket(robotIP, getPort(reqStr), TCP);
 		
 			//Send HTTP Req. to Robot
-			request = generateReq(robotIP, robotID, reqStr, imageID);
+			request = generateHTTPReq(robotIP, robotID, reqStr, imageID);
 			if(write(sockRobot, request, strlen(request)) != strlen(request)) {
 				fprintf(stderr, "Write error.\n");
 				continue;
@@ -160,7 +159,7 @@ char* getReq(char* msg) {
 	return msg+5+strlen(robotID);
 }
 
-char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
+char* generateHTTPReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	char* URI;
 	URI = (char*) malloc(sizeof(char)*MAXLINE);
 	char* ptr;
@@ -190,13 +189,21 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	char* req = malloc(sizeof(char)*MAXLINE);
 	strcat(req, "GET ");
 	strcat(req, URI);
-	strcat(req, " HTTP/1.1\r\nHost: ");
+	strcat(req, " HTTP/1.1\r\n");
+	
+	//Host
+	strcat(req, "Host: ");
 	strcat(req, robotIP);
 	strcat(req, ":");
 	strcat(req, getPort(reqStr));
-	strcat(req, "\r\nConnection: close");
-	strcat(req, "\r\n\r\n");
-	fprintf(stdout, "Request:\n%s", req);	
+	strcat(req, "\r\n");
+	
+	//Connection: close
+	strcat(req, "Connection: close\r\n");
+	
+	strcat(req, "\r\n");
+	
+	fprintf(stderr, "Request:\n%s", req);	
 
 	free(URI);
 	return req;
@@ -227,7 +234,7 @@ char* getPort(char* reqStr) {
 
 /* This routine contains the data printing that must occur before the program 
 *  quits after the CNTC signal. */
-void serverCNTCCode() {
+void flushBuffersAndExit() {
 	fflush(stdout);
 	exit(0);
 }
