@@ -94,21 +94,25 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	//only the last message's length is important
 	//the other lengths we assume to be equal to RESPONSE_MESSAGE_SIZE
 	int lastMessageLength = numMessages == 1? messageLength : 0;
-	
+
+	/*
 	fprintf(stderr, "ID: %d\n", extractMessageID(message));
 	fprintf(stderr, "Total: %d\n", extractNumMessages(message));
 	fprintf(stderr, "Sequence: %d\n", extractSequenceNum(message));
 	fprintf(stderr, "Length: %d\n", messageLength);
+	*/
 		
 	int numReceived = 1;
 	//reassemble response messages
 	while(numReceived < numMessages) {
 		message = recvMessage(ID, &messageLength);
 		i = extractSequenceNum(message);
+		/*
 		fprintf(stderr, "ID: %d\n", extractMessageID(message));
 		fprintf(stderr, "Total: %d\n", extractNumMessages(message));
 		fprintf(stderr, "Sequence: %d\n", extractSequenceNum(message));
 		fprintf(stderr, "Length: %d\n", messageLength);
+		*/
 		if(((char*)messages[i]) == NULL) {
 			messages[i] = message;
 			numReceived++;
@@ -121,8 +125,7 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 			free(message);
 		}
 	}
-	fprintf(stderr, "Out of loop\n");
-	fprintf(stderr, "Last message length: %d\n", lastMessageLength);
+	//fprintf(stderr, "Last message length: %d\n", lastMessageLength);
 	
 	//stop timer
 	stopTimer();
@@ -143,7 +146,7 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	
 	free(messages);
 	
-	fprintf(stderr, "Full response length: %d\n", *responseLength);
+	//fprintf(stderr, "Full response length: %d\n", *responseLength);
 	
 	//return data
 	return fullResponse;
@@ -205,6 +208,6 @@ void* recvMessage(int ID, int* messageLength) {
 			*messageLength = len;
 			return message;
 		}
-		printf("Received invalid response\n");
+		//printf("Received invalid response\n");
 	}
 }

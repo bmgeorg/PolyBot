@@ -27,13 +27,20 @@ void tracePolygon(int numSides, bool clockwise) {
    int waitSeconds;
    int waitUSeconds;
    
+   plog("tracing polygon of order %d", numSides);
+   plog("Clockwise: %d", clockwise);
+   
    //Determine the angle the robot should turn.
    double turnAngle = M_PI - ((numSides - 2)*M_PI/numSides);
    if(!clockwise) turnAngle = turnAngle*-1;
    
+   plog("Turn angle: %lf", turnAngle);
+   
    //Create a turn request for pi/4 radians per second.
    char *turnRequest = (char *)malloc(20);
    sprintf(turnRequest, "TURN %.10f", M_PI/4);
+   
+   plog("Turn request: %s", turnRequest);
    
    //Take initial screenshot before making the polygon.
    getSnapshot();
@@ -41,14 +48,22 @@ void tracePolygon(int numSides, bool clockwise) {
    //Logic for tracing the polygon.
    int i;
    for(i = 0; i < numSides; i++) {
+      plog("Iteration: %d", i);
+      
+      plog("Sending MOVE 1 command");
       //Send a request to begin moving.
       timeSpent = getTime();
       sendRequest("MOVE 1", &dummy, COMMAND_TIMEOUT);
       timeSpent = getTime() - timeSpent;
+      
+      plog("Time spent sending request and getting response: %lf", timeSpent);
 
       //Calculate wait time (L - time spent in sendRequest).
       if(L > timeSpent) {
          sleepTime = L - timeSpent;
+         
+         plog("waiting for %lf seconds", sleepTime);
+         
          waitSeconds = (int) sleepTime;
          sleepTime -= waitSeconds;
          waitUSeconds = (int) (sleepTime*1000000);
@@ -57,20 +72,31 @@ void tracePolygon(int numSides, bool clockwise) {
          sleep(waitSeconds);
          usleep(waitUSeconds);
       }
+      
+      plog("sending stop command");
+      
       //Send a request to stop the robot.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
+      
+      plog("sent stop command");
 
       //Take Snapshot after movement has ended.
       getSnapshot();
-
+      
+      plog("sending turnRequest: %s", turnRequest);
       //Send a request to begin turning.
       timeSpent = getTime();
       sendRequest(turnRequest, &dummy, COMMAND_TIMEOUT);
       timeSpent = getTime() - timeSpent;
       
+      plog("Time spent sending request and getting response: %lf", timeSpent);
+      
       //Calculate wait time (turnAngle/(M_PI/4) - time spent in sendRequest).
       if(turnAngle/(M_PI/4) > timeSpent) {
          sleepTime = turnAngle/(M_PI/4) - timeSpent;
+         
+         plog("waiting for %lf seconds", sleepTime);
+         
          waitSeconds = (int) sleepTime;
          sleepTime -= waitSeconds;
          waitUSeconds = (int) (sleepTime*1000000);
@@ -79,16 +105,16 @@ void tracePolygon(int numSides, bool clockwise) {
          sleep(waitSeconds);
          usleep(waitUSeconds);
       }
-
+      
+      plog("sending stop command");
       //Send a request to stop turning.
       sendRequest("STOP", &dummy, COMMAND_TIMEOUT);
+      plog("sent stop command");
    }
-
-   return;
 }
 
 void getSnapshot() {
-   int length;
+   /*int length;
    char *data;
 
    FILE *imageFile;       //File for the image data received.
@@ -137,8 +163,7 @@ void getSnapshot() {
 
    free(data);
    fclose(positionFile);
-
-   return;
+   */
 }
 
 double getTime() {
@@ -166,12 +191,18 @@ int main(int argc, char** argv) {
 		quit("N must be an integer the range [4, 8]");
 	}
 	
-	setupMessenger(serverHost, serverPort, robotID);
+	plog("Read arguments");
+	plog("Server host: %s", serverHost);
+	plog("Server port: %s", serverPort);
+	plog("Robot ID: %s", robotID);
+	plog("L: %d", L);
+	plog("N: %d", N);
 	
-	int dummy;
-	sendRequest("MOVE 1.0", &dummy, 1);
+	plog("Setting up clientMessenger");
+	
+	setupMessenger(serverHost, serverPort, robotID);
 		
-	//tracePolygon(N, true);
+	tracePolygon(N, true);
 	//tracePolygon(N-1, false);
 
 	return 0;
