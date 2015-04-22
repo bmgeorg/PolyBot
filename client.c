@@ -129,7 +129,7 @@ void getSnapshot() {
    char *imageFileName = (char *)malloc(50);
    char *positionFileName = (char *)malloc(50);
 
-   sprintf(imageFileName, "image-%d.png", fileCount);
+   sprintf(imageFileName, "image-%d.jpg", fileCount);
    sprintf(positionFileName, "position-%d.txt", fileCount);
    ++fileCount;
 
