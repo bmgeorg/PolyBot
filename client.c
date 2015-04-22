@@ -106,10 +106,6 @@ void getSnapshot() {
 
    //Get the image and write the data to the image file created.
    data = (char *)sendRequest("GET IMAGE", &length, DATA_TIMEOUT);
-   //while(length > 0) {
-   //   fprintf(imageFile, "%c", *data++);
-   //   --length;
-   //}
    if(fwrite(data, 1, length, imageFile) != length) quit("fwrite failed");
    
    //The imageFile is no longer needed.
@@ -118,10 +114,6 @@ void getSnapshot() {
    //Get GPS data from robot and print to positionFile
    data = (char *)sendRequest("GET GPS", &length, DATA_TIMEOUT);
    fprintf(positionFile, "GPS ");
-   //while(length > 0) {
-   //   fprintf(positionFile, "%c", *data++);
-   //   --length;
-   //}
    if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
@@ -129,10 +121,6 @@ void getSnapshot() {
    //Get DGPS data from robot and print to positionFile
    data = (char *)sendRequest("GET DGPS", &length, DATA_TIMEOUT);
    fprintf(positionFile, "DGPS ");
-   //while(length > 0) {
-   //   fprintf(positionFile, "%c", *data++);
-   //   --length;
-   //}
    if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
@@ -140,10 +128,6 @@ void getSnapshot() {
    //Get LASER data from robot and print to positionFile
    data = (char *)sendRequest("GET LASERS", &length, DATA_TIMEOUT);
    fprintf(positionFile, "LASERS ");
-   //while(length > 0) {
-   //   fprintf(positionFile, "%c", *data++);
-   //   --length;
-   //}
    if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
    
    fprintf(positionFile, "\n");
