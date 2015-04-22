@@ -167,14 +167,7 @@ int main(int argc, char *argv[])
 }
 
 char* getRobotID(char* msg) {
-	char* ptr = msg;
-	ptr += sizeof(uint32_t);
-	
-	char* robotID;
-	robotID = malloc(sizeof(ptr)+1);
-	memcpy(&robotID, ptr, (sizeof(ptr)+1));
-
-	return robotID;
+	return msg+4;
 }
 
 uint32_t getReqID(char* msg) {
@@ -184,15 +177,9 @@ uint32_t getReqID(char* msg) {
 }
 
 char* getReq(char* msg) {
-	char* ptr = msg;
-	char* ptr2;
-	
-	ptr2 = strchr(ptr, '\0');
-	ptr2 += 1;
+	char* robotID = getRobotID(msg);
 
-	char* req = malloc(sizeof(ptr2)+1);
-	memcpy(&req, ptr2, sizeof(ptr2)+1);
-	return req;
+	return msg+4+strlen(robotID);
 }
 
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
