@@ -127,13 +127,13 @@ int main(int argc, char *argv[])
 	
 			//Resolve Host
 			if (servaddr.sin_addr.s_addr == -1) {
-         	struct hostent *host = gethostbyname(argv[2]);
-         	if (host == NULL) {
-           		fprintf(stderr, "Unknown host error.\n");
-	         	continue;
+         	struct hostent *host = gethostbyname(robotIP);
+				if (host == NULL) {
+					fprintf(stderr, "Unknown host error.\n");
+					continue;
 				}
-   	      servaddr.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
-      	}
+				servaddr.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
+			}
 		
 			//Connect
 			if (connect(sockfd, (struct sockaddr *) &servaddr, 
