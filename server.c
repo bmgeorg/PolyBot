@@ -171,9 +171,7 @@ char* getRobotID(char* msg) {
 }
 
 uint32_t getReqID(char* msg) {
-	uint32_t id;
-	memcpy(&id, msg, sizeof(uint32_t));
-	return id;
+	return ntohl(*((uint32_t*)msg));
 }
 
 char* getReq(char* msg) {
