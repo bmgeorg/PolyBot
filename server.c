@@ -139,6 +139,10 @@ int main(int argc, char *argv[])
 
 		}
 	}
+	
+	free(responseBuffTCP);
+	free(request);
+
 }
 
 char* getRobotID(char* msg) {
