@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sys/types.h>	//for uint32_t
+#include <sys/time.h>	//for setitimer()
 #include <string.h>     //for memset()
 #include <sys/socket.h> //for socket(), connect(), sendto(), and recvfrom()
 #include <unistd.h>     //for close()
 #include <netdb.h>		//for addrinfo
-#include <signal.h>		//for alarm timeout
+#include <signal.h>		//for signal
 #include <assert.h>		//for assert()
 
 const int RESPONSE_MESSAGE_SIZE = 1000;
@@ -20,7 +21,8 @@ char* robotID;
 
 //private functions
 void setupSocket(char* serverHost, char* serverPort);
-void setupTimeoutHandler();
+void setTimer(double seconds);
+void stopTimer();
 void timedOut(int ignored);
 
 void* recvMessage(int ID, int* messageLength);
@@ -34,7 +36,6 @@ void setupMessenger(char* serverHost, char* serverPort, char* _robotID) {
 	assert(_robotID != NULL);
 
 	setupSocket(serverHost, serverPort);
-	setupTimeoutHandler();
 	robotID = _robotID;
 }
 
@@ -80,18 +81,6 @@ void setupSocket(char* serverHost, char* serverPort) {
 	freeaddrinfo(serverAddr);
 }
 
-void setupTimeoutHandler() {
-	//create alarm and set handler
-    struct sigaction handler;
-    handler.sa_handler = timedOut;
-    //block everything in handler
-    if(sigfillset(&handler.sa_mask) < 0)
-    	quit("sigfillset() failed");
-    handler.sa_flags = 0;
-    if(sigaction(SIGALRM, &handler, 0) < 0)
-    	quit("sigaction() failed for SIGALRM");
-}
-
 //the alarm handler for the timeout alarm
 void timedOut(int ignored) {
 	quit("Timed out without receiving server response");
@@ -103,7 +92,7 @@ void timedOut(int ignored) {
 	Set responseLength to total length of response
 	Return pointer to response data
 */
-void* sendRequest(char* requestString, int* responseLength, int timeout) {
+void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	static uint32_t ID = 0;
 	
 	//4 bytes for ID + robotID length + 1 byte for null char + requestString length + 1 byte for null char
@@ -129,7 +118,7 @@ void* sendRequest(char* requestString, int* responseLength, int timeout) {
 	free(request);
 
 	//start timeout timer
-	alarm(timeout);
+	setTimer(timeout);
 	
 	//get first message so we can allocate space for all messages
 	int messageLength;
@@ -176,7 +165,7 @@ void* sendRequest(char* requestString, int* responseLength, int timeout) {
 	fprintf(stderr, "Last message length: %d\n", lastMessageLength);
 	
 	//stop timer
-	alarm(0);
+	stopTimer();
 	
 	int PAYLOAD_SIZE = RESPONSE_MESSAGE_SIZE - 12;
 	*responseLength = (numMessages-1)*PAYLOAD_SIZE + (lastMessageLength-12);
@@ -198,6 +187,36 @@ void* sendRequest(char* requestString, int* responseLength, int timeout) {
 	
 	//return data
 	return fullResponse;
+}
+
+void setTimer(double seconds) {
+	struct itimerval it_val;
+
+	if(signal(SIGALRM, (void (*)(int)) timedOut) == SIG_ERR) {
+		quit("could not set signal handler - signal() failed");
+	}
+
+	it_val.it_value.tv_sec =  (int)seconds;
+	it_val.it_value.tv_usec = ((int)(seconds*1000000))%1000000;
+	it_val.it_interval.tv_sec = 0;
+	it_val.it_interval.tv_usec = 0;
+
+	if(setitimer(ITIMER_REAL, &it_val, NULL) == -1) {
+		quit("could not set timer - setitimer() failed");
+	}
+}
+
+void stopTimer() {
+	struct itimerval it_val;
+
+	it_val.it_value.tv_sec = 0;
+	it_val.it_value.tv_usec = 0;
+	it_val.it_interval.tv_sec = 0;
+	it_val.it_interval.tv_usec = 0;
+	
+	if(setitimer(ITIMER_REAL, &it_val, NULL) == -1) {
+		quit("could not stop timer - setitimer() failed");
+	}
 }
 
 int extractMessageID(void* message) {
