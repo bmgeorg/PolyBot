@@ -193,7 +193,6 @@ char* getReq(char* msg) {
 	return ptr2;
 }
 
-//TODO: getting number out of it for move and turn
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	char* request;
 	request = (char*) malloc(sizeof(char)*MAXLINE);
