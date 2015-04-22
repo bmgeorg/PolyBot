@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "bind() failed\n");
 		exit(1);
 	}
-	
+
 	//HANDLE UDP CLIENT
 	for (;;) /* Run forever */
 	{
@@ -108,6 +108,8 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "Robot ID's don't match\n");
 				continue;
 			}
+
+			reqStr = NULL;
 			reqStr = getReq(clientBuffer);
 			
 			//SEND HTTP GET REQUEST
@@ -160,33 +162,40 @@ char* getReq(char* msg) {
 }
 
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
-	char* request;
-	request = (char*) malloc(sizeof(char)*MAXLINE);
+	char* URI;
+	URI = (char*) malloc(sizeof(char)*MAXLINE);
 	char* ptr;
 	int n = 0;
 	if(strstr(reqStr, "MOVE") != NULL) {
 		ptr = strpbrk(reqStr, "0123456789");
 		n = atoi(ptr);
-		sprintf(request, "http://%s:8082/twist?id=%s&lx=%d",robotIP,robotID, n);
+		sprintf(URI, "http://%s:8082/twist?id=%s&lx=%d",robotIP,robotID, n);
 	} else if(strstr(reqStr, "TURN") != NULL) {
 		ptr = strpbrk(reqStr, "0123456789");
 		n = atoi(ptr);
-		sprintf(request, "http://%s:8082/twist?id=%s&az=%d",robotIP,robotID,n);
+		sprintf(URI, "http://%s:8082/twist?id=%s&az=%d",robotIP,robotID,n);
 	} else if(strstr(reqStr, "STOP") != NULL) {
-		sprintf(request, "http://%s:8082/twist?id=%s&lx=0",robotIP,robotID);
+		sprintf(URI, "http://%s:8082/twist?id=%s&lx=0",robotIP,robotID);
 	} else if(strstr(reqStr, "GET IMAGE") != NULL) {
-		sprintf(request, "http://%s:8081/snapshot?topic=/robot_%s/image?width=600?height=500", robotIP, imageID);
+		sprintf(URI, "http://%s:8081/snapshot?topic=/robot_%s/image?width=600?height=500", robotIP, imageID);
 	} else if(strstr(reqStr, "GET GPS") != NULL) {
-		sprintf(request, "http://%s:8082/state?id=%s",robotIP,robotID);
+		sprintf(URI, "http://%s:8082/state?id=%s",robotIP,robotID);
 	} else if(strstr(reqStr, "GET DGPS") != NULL) {
-		sprintf(request, "http://%s:8084/state?id=%s",robotIP,robotID);
+		sprintf(URI, "http://%s:8084/state?id=%s",robotIP,robotID);
 	} else if(strstr(reqStr, "GET LASERS") != NULL) {
-		sprintf(request, "http://%s:8083/state?id=%s",robotIP,robotID);
+		sprintf(URI, "http://%s:8083/state?id=%s",robotIP,robotID);
 	} else {
-		sprintf(request, "invalid");
+		sprintf(URI, "invalid");
 	}
 
-	return request;
+	char* req = malloc(sizeof(char)*MAXLINE);
+	strcat(req, "GET ");
+	strcat(req, URI);
+	strcat(req, " HTTP/1.1\r\nProxy-Connection: close\r\nHost: ");
+	strcat(req, robotIP);
+	strcat(req, "\r\n\r\n");
+	
+	return req;
 }
 
 //Gets TCP Port
