@@ -23,7 +23,6 @@ uint32_t getReqID(char* msg);
 char* getReq(char* msg);
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
 int checkIfOverflow(char* buff, int currentSize, int amtAdded);
-
 void serverCNTCCode();
 
 //Main Method
@@ -37,17 +36,16 @@ int main(int argc, char *argv[])
 	
 	signal(SIGINT, serverCNTCCode);
 	
-	//UDP Socket
+	//UDP Socket Variables
 	int sock;                        /* Socket */
 	struct sockaddr_in echoServAddr; /* Local address */
 	struct sockaddr_in echoClntAddr; /* Client address */
-	unsigned int cliAddrLen;         /* Length of incoming message */
-	char echoBuffer[MAXLINE+1];        /* Buffer for guess */
-	char returnBuffer[MAXLINE+1];      /* Buffer for returnCode */
+	unsigned int cliAddrLen; 
+	char echoBuffer[MAXLINE+1];        /* Buffer for incoming */
 	unsigned short echoServPort;     /* Server port */
 	int recvMsgSize;                 /* Size of received message */
 	
-	// Robot info
+	// Robot Variables
 	char* robotIP;
 	char* robotID;
 	char* imageID;
@@ -55,7 +53,7 @@ int main(int argc, char *argv[])
 	char* reqStr;
 	char* request;
 
-	//TCP Socket
+	//TCP Socket Variables
 	int sockfd, n;
 	struct sockaddr_in servaddr;
 	char recvline[MAXLINE+1];
@@ -68,6 +66,7 @@ int main(int argc, char *argv[])
 	robotID = argv[3];
 	imageID = argv[4];
 
+	//CREATE UDP SOCKET
 	/* Create socket for sending/receiving datagrams */
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		fprintf(stderr,("socket() failed\n"));
@@ -87,7 +86,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	
-	//Handle UDP Client
+	//HANDLE UDP CLIENT
 	for (;;) /* Run forever */
 	{
 		/* Set the size of the in-out parameter */
@@ -101,22 +100,17 @@ int main(int argc, char *argv[])
 			//Don't send to robot, but don't exit program
 		}
 		else {
+			//Check Clients Request
+			reqID = getReqID(echoBuffer);
 			if(strcmp(robotID, getRobotID(echoBuffer)) != 0) {
 				fprintf(stderr, "Robot ID's don't match\n");
 				continue;
 			}
-			reqID = getReqID(echoBuffer);
 			reqStr = getReq(echoBuffer);
 			
-			if(sendto(sock, returnBuffer, strlen(returnBuffer), 0, 
-					(struct sockaddr *) &echoClntAddr, 
-					sizeof(echoClntAddr)) != sizeof(returnBuffer)) {
-				fprintf(stderr,"sendto() sent a different number of bytes than expected\n");
-				continue;
-			}
-
 			//SEND HTTP GET REQUEST
-
+			
+			//CREATE TCP SOCKET
 			//Create Socket
 			if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 				printf("Error while creating the socket.\n");
@@ -145,14 +139,14 @@ int main(int argc, char *argv[])
 				continue;
 			}
 		
-			//Send
+			//Send HTTP Req. to Robot
 			request = generateReq(robotIP, robotID, reqStr, imageID);
 			if (write(sockfd, request, sizeof(request)) != sizeof(request)) {
 				printf("Write error.\n");
 				continue;
 			}
 
-			//Read response
+			//Read response from Robot
 			while( ( n = read(sockfd, recvline, MAXLINE)) > 0) {
 				recvline[n] = 0;
 				if(checkIfOverflow(responseBuffTCP, currentSize, n) == 1) {
@@ -164,38 +158,55 @@ int main(int argc, char *argv[])
 
 				strcat(responseBuffTCP, recvline);
 			}
-
-			/* Send response back to the client */
+			
+			/* Send response back to the UDP client */
 			sendResponse(sock, &echoClntAddr, cliAddrLen, reqID, responseBuffTCP, currentSize);
 
 		}
 	}
 }
 
-//TODO
 char* getRobotID(char* msg) {
+	char* ptr = msg;
+	ptr += sizeof(uint32_t);
 	
+	char* robotID;
+	robotID = malloc(sizeof(ptr)+1);
+	memcpy(&robotID, ptr, (sizeof(ptr)+1));
+
+	return robotID;
 }
 
-//TODO
 uint32_t getReqID(char* msg) {
-	
+	uint32_t id;
+	memcpy(&id, msg, sizeof(uint32_t));
+	return id;
 }
 
-//TODO
 char* getReq(char* msg) {
+	char* ptr = msg;
+	char* ptr2;
 	
+	ptr2 = strchr(ptr, '\0');
+	ptr2 += 1;
+
+	char* req = malloc(sizeof(ptr2)+1);
+	memcpy(&req, ptr2, sizeof(ptr2)+1);
+	return req;
 }
 
-//TODO: getting number out of it for move and turn
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 	char* request;
 	request = (char*) malloc(sizeof(char)*MAXLINE);
-	
+	char* ptr;
 	int n = 0;
 	if(strstr(reqStr, "MOVE") != NULL) {
+		ptr = strpbrk(reqStr, "0123456789");
+		n = atoi(ptr);
 		sprintf(request, "http://%s:8082/twist?id=%s&lx=%d",robotIP,robotID, n);
 	} else if(strstr(reqStr, "TURN") != NULL) {
+		ptr = strpbrk(reqStr, "0123456789");
+		n = atoi(ptr);
 		sprintf(request, "http://%s:8082/twist?id=%s&az=%d",robotIP,robotID,n);
 	} else if(strstr(reqStr, "STOP") != NULL) {
 		sprintf(request, "http://%s:8082/twist?id=%s&lx=0",robotIP,robotID);
