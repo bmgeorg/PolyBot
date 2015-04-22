@@ -17,8 +17,8 @@ int L; //L >= 1
 int N; //4 <= N <= 8
 int fileCount = 0;
 
-const int COMMAND_TIMEOUT = 1;
-const int DATA_TIMEOUT = 5;
+const double COMMAND_TIMEOUT = 0.95;
+const double DATA_TIMEOUT = 5.0;
 
 void tracePolygon(int numSides, bool clockwise) {
    int dummy;
