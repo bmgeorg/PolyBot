@@ -109,6 +109,7 @@ void getSnapshot() {
    if(fwrite(data, 1, length, imageFile) != length) quit("fwrite failed");
    
    //The imageFile is no longer needed.
+   free(data);
    fclose(imageFile);
 
    //Get GPS data from robot and print to positionFile
@@ -117,6 +118,8 @@ void getSnapshot() {
    if(fwrite(data, 1, length, positionFile) != length) quit("fwrite failed");
 
    fprintf(positionFile, "\n");
+
+   free(data);
 
    //Get DGPS data from robot and print to positionFile
    data = (char *)sendRequest("GET DGPS", &length, DATA_TIMEOUT);
@@ -132,6 +135,7 @@ void getSnapshot() {
    
    fprintf(positionFile, "\n");
 
+   free(data);
    fclose(positionFile);
 
    return;
