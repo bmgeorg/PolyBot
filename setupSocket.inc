@@ -14,12 +14,15 @@ int setupSocket(char* serverHost, char* serverPort, SocketType type) {
 		addrCriteria.ai_protocol = IPPROTO_TCP;
 	}
 	else {
-		quit("unexpected SocketType in setupSocket()");
+		fprintf(stderr, "unexpected SocketType in setupSocket()\n");
+		return -1;
 	}
 	struct addrinfo *serverAddr;
 	int error = getaddrinfo(serverHost, serverPort, &addrCriteria, &serverAddr);
-	if(error != 0)
-		quit("could not get address information for host");
+	if(error != 0) {
+		fprintf(stderr, "could not get address information for host\n");
+		return -1;
+	}
 
 	int sock = -1;
 	//loop through addresses and try to connect() to each one
@@ -38,10 +41,7 @@ int setupSocket(char* serverHost, char* serverPort, SocketType type) {
 		close(sock);
 		sock = -1;
 	}
-	
-	if(sock == -1)
-		quit("could not connect to host");
-	
+
 	freeaddrinfo(serverAddr);
 	
 	return sock;
