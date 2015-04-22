@@ -95,24 +95,22 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	//the other lengths we assume to be equal to RESPONSE_MESSAGE_SIZE
 	int lastMessageLength = numMessages == 1? messageLength : 0;
 
-	/*
-	fprintf(stderr, "ID: %d\n", extractMessageID(message));
-	fprintf(stderr, "Total: %d\n", extractNumMessages(message));
-	fprintf(stderr, "Sequence: %d\n", extractSequenceNum(message));
-	fprintf(stderr, "Length: %d\n", messageLength);
-	*/
-		
+	plog("ID: %d\n", extractMessageID(message));
+	plog("Total: %d\n", extractNumMessages(message));
+	plog("Sequence: %d\n", extractSequenceNum(message));
+	plog("Length: %d\n", messageLength);
+
 	int numReceived = 1;
 	//reassemble response messages
 	while(numReceived < numMessages) {
 		message = recvMessage(ID, &messageLength);
 		i = extractSequenceNum(message);
-		/*
-		fprintf(stderr, "ID: %d\n", extractMessageID(message));
-		fprintf(stderr, "Total: %d\n", extractNumMessages(message));
-		fprintf(stderr, "Sequence: %d\n", extractSequenceNum(message));
-		fprintf(stderr, "Length: %d\n", messageLength);
-		*/
+
+		plog("ID: %d\n", extractMessageID(message));
+		plog("Total: %d\n", extractNumMessages(message));
+		plog("Sequence: %d\n", extractSequenceNum(message));
+		plog("Length: %d\n", messageLength);
+
 		if(((char*)messages[i]) == NULL) {
 			messages[i] = message;
 			numReceived++;
@@ -121,7 +119,7 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 			if(i == numMessages-1)
 				lastMessageLength = messageLength;
 		} else {
-			fprintf(stderr, "duplicate message\n");
+			plog("duplicate message\n");
 			free(message);
 		}
 	}
@@ -146,7 +144,7 @@ void* sendRequest(char* requestString, int* responseLength, double timeout) {
 	
 	free(messages);
 	
-	//fprintf(stderr, "Full response length: %d\n", *responseLength);
+	plog("Full response length: %d\n", *responseLength);
 	
 	//return data
 	return fullResponse;
