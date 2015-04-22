@@ -15,6 +15,8 @@
 #include <time.h>       /* for time() */
 #include <signal.h>
 
+#include "setupSocket.inc"
+
 #define MAXLINE 1000 
 
 //Method Signatures
@@ -22,7 +24,7 @@ char* getRobotID(char* msg);
 uint32_t getReqID(char* msg);
 char* getReq(char* msg);
 char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID);
-int getPort(char* robotCommand);
+char* getPort(char* robotCommand);
 int checkIfOverflow(char* buff, int currentSize, int amtAdded);
 void serverCNTCCode();
 
@@ -56,7 +58,6 @@ int main(int argc, char *argv[])
 
 	//TCP Socket Variables
 	int sockRobot, n;
-	struct sockaddr_in servaddr;
 	char recvline[MAXLINE+1];
 	char* responseBuffTCP;
 	responseBuffTCP = malloc(sizeof(char)*1000);
@@ -111,36 +112,7 @@ int main(int argc, char *argv[])
 			
 			//SEND HTTP GET REQUEST
 			
-			//CREATE TCP SOCKET
-			//Create Socket
-			if ( (sockRobot = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-				printf("Error while creating the socket.\n");
-				continue;
-			}
-
-			int TCPport = getPort(reqStr);
-			
-			bzero(&servaddr, sizeof(servaddr));
-			servaddr.sin_family = AF_INET;
-			servaddr.sin_port   = htons(TCPport);
-			servaddr.sin_addr.s_addr = inet_addr(robotIP);
-	
-			//Resolve Host
-			if (servaddr.sin_addr.s_addr == -1) {
-         	struct hostent *host = gethostbyname(robotIP);
-				if (host == NULL) {
-					fprintf(stderr, "Unknown host error.\n");
-					continue;
-				}
-				servaddr.sin_addr.s_addr = *((unsigned long *)host->h_addr_list[0]);
-			}
-		
-			//Connect
-			if (connect(sockRobot, (struct sockaddr *) &servaddr, 
-					sizeof(servaddr)) < 0) {
-				printf("Connect failed.\n");
-				continue;
-			}
+			sockRobot = setupSocket(robotIP, getPort(reqStr), TCP);
 		
 			//Send HTTP Req. to Robot
 			request = generateReq(robotIP, robotID, reqStr, imageID);
@@ -214,24 +186,24 @@ char* generateReq(char* robotIP, char* robotID, char* reqStr, char* imageID) {
 }
 
 //Gets TCP Port
-int getPort(char* reqStr) {
+char* getPort(char* reqStr) {
 	
 	if(strstr(reqStr, "MOVE") != NULL) {
-		return 8082;
+		return "8082";
 	} else if(strstr(reqStr, "TURN") != NULL) {
-		return 8082;
+		return "8082";
 	} else if(strstr(reqStr, "STOP") != NULL) {
-		return 8082;
+		return "8082";
 	} else if(strstr(reqStr, "GET IMAGE") != NULL) {
-		return 8081;
+		return "8081";
 	} else if(strstr(reqStr, "GET GPS") != NULL) {
-		return 8082;
+		return "8082";
 	} else if(strstr(reqStr, "GET DGPS") != NULL) {
-		return 8084;
+		return "8084";
 	} else if(strstr(reqStr, "GET LASERS") != NULL) {
-		return 8083;
+		return "8083";
 	} else {
-		return 0;
+		return "0";
 	}
 	
 }

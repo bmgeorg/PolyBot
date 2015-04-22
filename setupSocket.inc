@@ -4,7 +4,7 @@ typedef enum {TCP, UDP} SocketType;
 int setupSocket(char* serverHost, char* serverPort, SocketType type) {
 	struct addrinfo addrCriteria;
 	memset(&addrCriteria, 0, sizeof(addrCriteria));
-	addrCriteria.ai_family = AF_UNSPEC;
+	addrCriteria.ai_family = AF_INET;
 	if(type == UDP) {
 		addrCriteria.ai_socktype = SOCK_DGRAM;
 		addrCriteria.ai_protocol = IPPROTO_UDP;
